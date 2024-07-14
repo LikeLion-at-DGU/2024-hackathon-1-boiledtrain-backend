@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+
+    <link rel="stylesheet" href="{% static "css/global.css" %}" />
+    <link rel="stylesheet" href="{% static "css/index.css" %}" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Raleway:wght@600&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Gochi Hand:wght@400&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Baloo 2:wght@400;600&display=swap"
+    />
+  </head>
+  <body>
+    <div class="webpage">
+      <img class="bg-icon" alt="" src="{% static "images/fotor-ai-2024071002738.jpg" %}" />
+
+      <div class="buy-now-button"></div>
+      <div class="navigation">
+        <a class="about-us">ABOUT US</a>
+        <a class="services">SERVICES</a>
+        <a class="contact">CONTACT</a>
+      </div>
+      <div class="content">
+        <div class="frame-parent">
+          <div class="train-parent">
+            <h1 class="train">Train</h1>
+            <div class="slogan">
+              <h2 class="take-your-time">take your time.</h2>
+            </div>
+            <div class="hackathon">
+              <div class="dongguk-university-like">
+                Dongguk University 'Like Lion' Central Hackathon is a really
+                cool competition, isn't it?
+              </div>
+            </div>
+          </div>
+
+          {% if user.is_authenticated %}
+          <!-- 로그인 시 보이는 화면-->
+          
+          <h2 class="take-your-time">{{user.nickname}} &nbsp</h2> 
+          
+          {% else %}
+          <!-- 로그아웃 시 보이는 화면-->
+          <a href="http://127.0.0.1:8000/accounts/kakao/login/">
+          <div class="login">
+            <img
+              class="kakao-login-medium-narrow-1-icon"
+              loading="lazy"
+              alt=""
+              src="{% static "images/kakao_login_medium_narrow.png" %}"
+            />
+          </div>
+        </a>
+          {% endif %}
+
+    
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
