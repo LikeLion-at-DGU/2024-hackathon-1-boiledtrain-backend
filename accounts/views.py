@@ -23,6 +23,8 @@ state = getattr(settings, 'STATE')
 def login(request):
     return render(request, 'accounts/logintest.html')
 
+def userinfo(request):
+    user = request.user
     
 def kakao_login(request):
     rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
