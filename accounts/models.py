@@ -39,6 +39,7 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True, max_length=255)
+    # 닉네임 필드 추가
     nickname = models.CharField(unique=True, max_length=30)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
