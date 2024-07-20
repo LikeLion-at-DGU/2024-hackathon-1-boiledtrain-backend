@@ -4,5 +4,5 @@ from subway import views
 
 app_name = "subway"
 urlpatterns = [
-    path('random/', views.random_test, name="random_test"),
+    path('random/', views.random_station, name="random_station"),
 ]
