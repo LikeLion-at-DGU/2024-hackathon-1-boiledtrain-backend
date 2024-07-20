@@ -3,7 +3,7 @@ import json, requests, random
 from django.shortcuts import redirect
 from django.conf import settings
 # Create your views here.
-def random_test(request):
+def random_station(request):
     with open('station_cd_list.json', 'r', encoding='utf-8') as file:
         station_cd_list = json.load(file)
 
