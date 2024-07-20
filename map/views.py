@@ -11,7 +11,7 @@ def search_near_places(request):
         subway_url = f"{BASE_URL}subway/random"
         subway_response = requests.get(subway_url).json()
         if subway_response["SearchSTNBySubwayLineInfo"]:
-            place = subway_response["SearchSTNBySubwayLineInfo"]["row"][0]["STATION_NM"]
+            place = subway_response["SearchSTNBySubwayLineInfo"]["row"][0]["STATION_NM"] + "역"
         else:
             return JsonResponse({'error': 'Station not found'})
         
@@ -25,13 +25,21 @@ def search_near_places(request):
             location = location_response['candidates'][0]['geometry']['location']
             lat = location['lat']
             lng = location['lng']
-            # 이 부분 수정 가능
-            category = 'cafe'
-            nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=500&language=kr&type={category}&key={rest_api_key}"
-            nearby_response = requests.get(nearby_url).json()
+
+            # place_category.json 파일에서 랜덤 카테고리 추출
+            with open('place_category.json', 'r', encoding='utf-8') as f:
+                categories = json.load(f)['places']
+            # category = random.choice(categories)
+            while True:
+                category = random.choice(categories)
+                nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=500&language=kr&type={category}&key={rest_api_key}"
+                nearby_response = requests.get(nearby_url).json()
+                if len(nearby_response['results']) != 0 :
+                    break 
             
             result = {
                 'subway_station': location_response['candidates'][0],
+                'category' : category,
                 'nearby_places': nearby_response['results']
             }
             return JsonResponse(result)
