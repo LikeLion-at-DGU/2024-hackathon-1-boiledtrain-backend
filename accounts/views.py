@@ -1,33 +1,42 @@
-import json
-import requests
-from django.shortcuts import redirect, render
+import json, requests
+
+from rest_framework.response import Response
+from django.shortcuts import redirect
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.http import JsonResponse
 from json.decoder import JSONDecodeError
 from rest_framework import status
+from rest_framework import viewsets, mixins
+
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.kakao import views as kakao_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from allauth.socialaccount.models import SocialAccount
 from .models import User
 
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from .serializers import UserInfoSerializer
 
 BASE_URL = 'http://localhost:8000/'
 KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/login/callback/'
 
 state = getattr(settings, 'STATE')
 
-def login(request):
-    return render(request, 'accounts/logintest.html')
+class Userinfo(viewsets.GenericViewSet, mixins.ListModelMixin):
+    permission_classes = [IsAuthenticated]
 
-def userinfo(request):
-    user = request.user
+    def get_queryset(self):
+        # 토큰에 해당하는 사용자의 정보만 반환
+        return User.objects.filter(id=self.request.user.id)
     
+    def get_serializer_class(self):
+        return UserInfoSerializer
+    
+    
+# 이 부분부터 카카오 로그인
 def kakao_login(request):
-    rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
+    rest_api_key = getattr(settings, 'SUBWAY_KEY')
     return redirect(
         f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={KAKAO_CALLBACK_URI}&response_type=code&prompt=login"
     )
