@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     # my app
     'accounts',
+    'subway',
+    'map',
     # django-rest-framework
     'rest_framework',
     "rest_framework.authtoken",
