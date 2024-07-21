@@ -6,18 +6,14 @@
         "bakery",
         "bar",
         "book_store",
-        "bowling_alley",
         "cafe",
         "campground",
-        "clothing_store",
         "department_store",
         "museum",
         "park",
         "restaurant",
-        "rv_park",
         "shopping_mall",
         "spa",
-        "store",
         "zoo"
     ]
 }
