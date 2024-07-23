@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.http import JsonResponse
 import requests, json, random
 from django.conf import settings
+from rest_framework import viewsets, mixins
+from .models import place
 
 BASE_URL = 'http://localhost:8000/'
 
@@ -115,3 +117,9 @@ def search_near_places(request):
         else:
             return JsonResponse({'error': 'Place not found'})
     return JsonResponse(location_response)
+
+###################################################################
+# M.K 파트
+class Place(viewsets.ModelViewSet):
+    pass
+    # 장소 정보를 추가, 삭제, 출력
