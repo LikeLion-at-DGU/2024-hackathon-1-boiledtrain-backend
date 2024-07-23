@@ -1,7 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
-# Create your models here.
+
+# 커스텀한 유저 모델을 사용한다는 뜻
+User = settings.AUTH_USER_MODEL
 
 # 장소 정보를 출력할 코스를 저장하는 데이터베이스
 # placelist 에는 장소의 id 값을 list 형태로 저장한 후 json 필드로 변환하여 저장

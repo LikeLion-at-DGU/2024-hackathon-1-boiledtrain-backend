@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'accounts',
     'subway',
     'map',
+    'user',
     # django-rest-framework
     'rest_framework',
     "rest_framework.authtoken",
@@ -65,6 +66,7 @@ INSTALLED_APPS = [
 
 SITE_ID = 1
 AUTH_USER_MODEL = 'accounts.User' 
+
 # rest framework
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (

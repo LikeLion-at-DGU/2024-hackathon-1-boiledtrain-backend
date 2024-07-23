@@ -1,7 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
-# Create your models here.
+# 커스텀한 유저 모델을 사용한다는 뜻
+User = settings.AUTH_USER_MODEL
+
 
 # 장소의 카테고리
 # 랜덤출력에서 사용되는 카테고리와 동일하게 할 예정
