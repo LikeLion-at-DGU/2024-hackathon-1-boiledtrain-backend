@@ -3,6 +3,7 @@ from django.http import JsonResponse
 import requests, json, random
 from django.conf import settings
 from rest_framework import viewsets, mixins
+from datetime import datetime
 
 
 BASE_URL = 'http://localhost:8000/'
@@ -42,6 +43,13 @@ def search_near_places(request):
                     if not available_categories:
                         break
                     category = random.choice(available_categories)
+
+                    # 시간 조건
+                    if category == "bar":
+                        current_hour = datetime.now().hour
+                        if not (15 <= current_hour <= 22):  # 오후 3시 ~ 오후 10시 사이가 아닐 경우
+                            continue
+
                     nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=kr&type={category}&key={rest_api_key}"
                     nearby_response = requests.get(nearby_url).json()
 
@@ -74,6 +82,7 @@ def search_near_places(request):
                                         and '7080' not in place.get('name', '')
                                         and '상가' not in place.get('name', '')
                                         and '프라자' not in place.get('name', '')
+                                        and 'plaza' not in place.get('name', '')
                                         and 'Pizza Hut' not in place.get('name', '')
                                         and 'Compose Coffee' not in place.get('name', '')
                                         and 'Mega Coffee' not in place.get('name', '')
@@ -93,6 +102,7 @@ def search_near_places(request):
                                         and '메가엠지씨커피' not in place.get('name', '')
                                         and 'Fitness' not in place.get('name', '')
                                         and '멕시카나' not in place.get('name', '')
+                                        and 'Tom N Toms' not in place.get('name', '')
                                         and place.get('user_ratings_total', 0) >= 5
                                         and place.get('place_id') not in selected_places_ids  # 중복 체크
                                         ]
