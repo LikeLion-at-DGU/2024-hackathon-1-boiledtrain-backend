@@ -33,9 +33,10 @@ def search_near_places(request):
             with open('place_category.json', 'r', encoding='utf-8') as f:
                 categories = json.load(f)['places']
 
-            results = [{'subway_station': location_response['candidates'][0]}]
+            # 지하철 정보 json 저장
             selected_places_ids = set()  # 중복 체크를 위한 장소 ID 집합
             selected_categories = set()  # 중복 체크를 위한 카테고리 집합
+            test = []
 
             for _ in range(3):  # 3번 반복
                 while True:
@@ -114,11 +115,12 @@ def search_near_places(request):
                 selected_places_ids.add(selected_place['place_id'])  # 선택된 장소 ID 저장
                 selected_categories.add(category)  # 선택된 카테고리 저장
 
-                results.append({
+                test.append({
                     'category': category,
                     'nearby_place': selected_place
                 })
 
+            results = {'subway_station': location_response['candidates'][0]['name'], 'test' : test}
             result = {
                 'results': results  # 3개의 카테고리와 장소를 포함
             }
@@ -130,6 +132,33 @@ def search_near_places(request):
 
 ###################################################################
 # M.K 파트
+def choose_place(request):
+    # 사용자가 프론트 인터페이스에 입력한 장소 이름을 받아와서 구글 api를 통해 검색
+    rest_api_key = getattr(settings, 'MAP_KEY')
+    #프론트에서 받아올 부분
+    place = "길음 롯데리아"
+    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={place}&key={rest_api_key}&language=kr"
+    location_response = requests.get(location_url).json()
+    
+    return JsonResponse(location_response)
+
+def add_place(request):
+
+    # choose_place 에서 선택한 장소의 id 를 전달받아서 세부 정보를 가져온 후 db 에 json 형태로 저장
+    rest_api_key = getattr(settings, 'MAP_KEY')
+    #프론트에서 받아올 부분
+    place_id = "경춘선 숲길"
+    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={place}&key={rest_api_key}&language=kr"
+    location_response = requests.get(location_url).json()
+    
+    # if location_response['candidates']:
+    #     location = location_response['candidates'][0]['geometry']['location']
+    #     lat = location['lat']
+    #     lng = location['lng']
+    # detail_url = f"https://maps.googleapis.com/maps/api/place/details/json?fields=name%2Crating%2Cformatted_phone_number&place_id=ChIJN1t_tDeuEmsRUsoyG83frY4&key={rest_api_key}"
+    # detail_response = requests.get(detail_url).json()
+    return JsonResponse(location_response)
+
 class Place(viewsets.ModelViewSet):
     pass
     # 장소 정보를 추가, 삭제, 출력
