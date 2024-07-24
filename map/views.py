@@ -136,6 +136,7 @@ def choose_place(request):
     # 사용자가 프론트 인터페이스에 입력한 장소 이름을 받아와서 구글 api를 통해 검색
     rest_api_key = getattr(settings, 'MAP_KEY')
     #프론트에서 받아올 부분
+    subway_station = "돌곶이역"
     place = "길음 롯데리아"
     location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={place}&key={rest_api_key}&language=kr"
     location_response = requests.get(location_url).json()
