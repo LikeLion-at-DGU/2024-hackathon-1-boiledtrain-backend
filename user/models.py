@@ -1,10 +1,11 @@
 from django.db import models
 from django.conf import settings
 
-
 # 커스텀한 유저 모델을 사용한다는 뜻
 User = settings.AUTH_USER_MODEL
 
+class Subway(models.Model):
+    subway = models.CharField(max_length=50)
 # 장소 정보를 출력할 코스를 저장하는 데이터베이스
 # placelist 에는 장소의 id 값을 list 형태로 저장한 후 json 필드로 변환하여 저장
 # 장소 id 는 외래키가 아니므로 placelist 필드를 이용하는 매소드 실행 시 필수로 DB 에 장소 id 가 존재하는지 검사
@@ -12,6 +13,7 @@ User = settings.AUTH_USER_MODEL
 class Course(models.Model):
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=50)
+    subway = models.ForeignKey(Subway, on_delete=models.CASCADE, related_name="courses")
     placelist = models.JSONField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     like_count = models.IntegerField(default=0)
