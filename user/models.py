@@ -11,6 +11,7 @@ User = settings.AUTH_USER_MODEL
 # 존재하지 않는다면 즉시 list 에서 id 값을 삭제
 class Course(models.Model):
     id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=50)
     placelist = models.JSONField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     like_count = models.IntegerField(default=0)
@@ -25,6 +26,7 @@ class Course(models.Model):
 # 코스를 외래키로 함
 class Diary(models.Model):
     id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=50)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     content = models.TextField()
