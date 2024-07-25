@@ -107,6 +107,7 @@ def search_places_random(request):
 def search_places_category(request):
     if request.method == "GET":
         user_category = 'restaurant'
+
         result = []
         i = 0 # 인덱스
 
@@ -130,7 +131,6 @@ def search_places_category(request):
                 # else:
                 #     return JsonResponse({'error': 'Station not found'})
                 
-
                 subway = station_nm_list[i] + "역"
                 i = i + 1
                 # 지하철역의 이름을 추출해서 장소 검색
