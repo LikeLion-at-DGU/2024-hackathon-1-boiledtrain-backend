@@ -25,7 +25,7 @@ state = getattr(settings, 'STATE')
 
 class Userinfo(viewsets.GenericViewSet, mixins.ListModelMixin):
     permission_classes = [IsAuthenticated]
-
+     
     def get_queryset(self):
         # 토큰에 해당하는 사용자의 정보만 반환
         return User.objects.filter(id=self.request.user.id)

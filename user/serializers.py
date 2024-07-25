@@ -18,4 +18,3 @@ class CourseSerializer(serializers.ModelSerializer):
 class DiarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Diary
-        fields = '__all__'
