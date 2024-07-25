@@ -44,7 +44,7 @@ class DiaryViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.Up
 class CourseDiaryViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
     permission_classes = [AllowAny]
     serializer_class = DiarySerializer
- # permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+# permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     def get_object(self):
         course_id = self.kwargs.get("course_id")
         return get_object_or_404(Diary, course_id=course_id)
