@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.conf import settings
 
 # 커스텀한 유저 모델을 사용한다는 뜻
