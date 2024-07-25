@@ -1,0 +1,24 @@
+body {
+    margin: 0;
+    line-height: normal;
+  }
+  
+  :root {
+    /* fonts */
+    --font-baloo-2: "Baloo 2";
+    --font-gochi-hand: "Gochi Hand";
+    --font-raleway: Raleway;
+  
+    /* font sizes */
+    --font-size-9xl: 1.75rem;
+  
+    /* Colors */
+    --color-gray: #332623;
+    --color-black: #000;
+  
+    /* Paddings */
+    --padding-18xl: 2.312rem;
+    --padding-55xl: 4.625rem;
+    --padding-xl: 1.25rem;
+    --padding-8xl: 1.687rem;
+  }

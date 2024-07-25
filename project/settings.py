@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'user',
     # django-rest-framework
     'rest_framework',
-    "rest_framework.authtoken",
+    'rest_framework.authtoken',
     'rest_framework_simplejwt.token_blacklist',
     # dj-rest-auth
     'dj_rest_auth',
@@ -102,13 +102,14 @@ SIMPLE_JWT = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # all-auth
-    "allauth.account.middleware.AccountMiddleware",
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'project.urls'
@@ -188,3 +189,17 @@ MEDIA_URL = '/media/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# corsheaders
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+# 로컬 개발용 주소 
+    'http://localhost:3000', 
+    'http://localhost:5173', 
+    'http://127.0.0.1:3000', 
+    'http://127.0.0.1:5173',
+# 프론트엔드 도메인 또는 IP주소
+# 예를 들어, 아래와 같이 입력
+    'http://프론트엔드주소', 
+    'http://프론트주소:포트번호', 
+]
