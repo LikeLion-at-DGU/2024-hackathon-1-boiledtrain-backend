@@ -18,7 +18,7 @@ excluded_keywords = [
             '프라자', 'plaza', 'Pizza Hut', 'Compose Coffee', 'Mega Coffee', 'Krispy Kreme', '로봇카페', '무인카페', 
             '커스텀커피', 'Chicken Mania', 'BHC', 'BBQ', 'The Coffee Bean', '교촌', '피씨카페', 'Twosome Place', '샵', 
             '메가커피', '메가엠지씨커피', 'Fitness', '멕시카나', 'Tom N Toms', 'Puradak Chicken', 'COFFEE BAY', '페리카나', 
-            'paris baguette', 'Pascucci', 'Gongcha', "Paik's"
+            'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아'
         ]
 
 ###################################################
@@ -106,7 +106,8 @@ def search_places_random(request):
 # 목적 여행
 def search_places_category(request):
     if request.method == "GET":
-        user_category = 'amusement_park'
+        user_category = 'restaurant'
+
         result = []
         i = 0 # 인덱스
 
@@ -130,12 +131,11 @@ def search_places_category(request):
                 # else:
                 #     return JsonResponse({'error': 'Station not found'})
                 
-
-                place = station_nm_list[i] + "역"
+                subway = station_nm_list[i] + "역"
                 i = i + 1
                 # 지하철역의 이름을 추출해서 장소 검색
                 rest_api_key = settings.MAP_KEY
-                location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={place}&inputtype=textquery&key={rest_api_key}&language=ko"
+                location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={subway}&inputtype=textquery&key={rest_api_key}&language=ko"
                 location_response = requests.get(location_url).json()
 
                 # 검색된 정보에서 위도, 경도를 추출하여 근처 장소 검색
@@ -149,7 +149,7 @@ def search_places_category(request):
 
                     # rating이 4.0 이상인 곳만 필터링
                     filtered_places = [place for place in nearby_response['results']
-                                        if place.get('rating', 0) >= 3.0
+                                        if place.get('rating', 0) >= 4.0
                                         and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
                                         and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
                                         and place.get('user_ratings_total', 0) >= 3]
@@ -157,7 +157,7 @@ def search_places_category(request):
                         # 필터링된 장소에서 랜덤으로 하나 선택
                         selected_place = random.choice(filtered_places)
                         result.append({
-                            'subway_station': location_response['candidates'][0]['name'],
+                            'subway_station': subway,
                             'nearby_place': {
                                 'name': selected_place['name'],
                                 'place_id' : selected_place['place_id'],
@@ -176,4 +176,3 @@ def search_places_category(request):
             return JsonResponse({'error': 'No suitable places found'})
         
     return JsonResponse({'results': {'error': 'Invalid request method'}})
-
