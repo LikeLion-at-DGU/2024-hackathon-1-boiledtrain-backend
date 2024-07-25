@@ -106,26 +106,33 @@ def search_places_random(request):
 # 목적 여행
 def search_places_category(request):
     if request.method == "GET":
-        user_category = 'art_gallery'
+        user_category = 'amusement_park'
         result = []
-        selected_stations = set()  # 중복 체크를 위한 지하철역 집합
-        
+        i = 0 # 인덱스
+
+        # selected_stations = set()  # 중복 체크를 위한 지하철역 집합
+        with open('station_nm_list.json', 'r', encoding='utf-8') as file:
+            station_nm_list = json.load(file)
+        random.shuffle(station_nm_list)
         for _ in range(3):  # 3번 반복
             while True:  # 조건에 맞는 장소가 나올 때까지 반복
                 # 지하철역 랜덤 추출
-                
-                subway_url = f"{BASE_URL}subway/random"
-                subway_response = requests.get(subway_url).json()
-                if subway_response["SearchSTNBySubwayLineInfo"]:
-                    station_name = subway_response["SearchSTNBySubwayLineInfo"]["row"][0]["STATION_NM"]
-                    if station_name in selected_stations:
-                        continue
+                cur_time = time.time()
+                # subway_url = f"{BASE_URL}subway/random"
+                # subway_response = requests.get(subway_url).json()
+                # if subway_response["SearchSTNBySubwayLineInfo"]:
+                #     station_name = subway_response["SearchSTNBySubwayLineInfo"]["row"][0]["STATION_NM"]
+                #     if station_name in selected_stations:
+                #         continue
                     
-                    selected_stations.add(station_name)
-                    place = station_name + "역" 
-                else:
-                    return JsonResponse({'error': 'Station not found'})
+                #     selected_stations.add(station_name)
+                #     place = station_name + "역" 
+                # else:
+                #     return JsonResponse({'error': 'Station not found'})
+                
 
+                place = station_nm_list[i] + "역"
+                i = i + 1
                 # 지하철역의 이름을 추출해서 장소 검색
                 rest_api_key = settings.MAP_KEY
                 location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={place}&inputtype=textquery&key={rest_api_key}&language=ko"
@@ -158,7 +165,11 @@ def search_places_category(request):
                                 'user_ratings_total': selected_place['user_ratings_total']
                             }
                         })
+                        end_time = time.time()
+                        print("시간 : ", end_time - cur_time)
                         break
+                
+                    
         if result:
             return JsonResponse({'results': {'category': user_category, 'places': result}})
         else:
