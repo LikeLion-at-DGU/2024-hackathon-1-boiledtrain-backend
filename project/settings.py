@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'subway',
     'map',
     'user',
+    #cors-headers
+    'corsheaders',
     # django-rest-framework
     'rest_framework',
     'rest_framework.authtoken',
