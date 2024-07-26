@@ -18,8 +18,8 @@ from .models import User
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserInfoSerializer
 
-BASE_URL = 'http://3.36.243.22'
-KAKAO_CALLBACK_URI = BASE_URL + '/accounts/kakao/login/callback/'
+BASE_URL = 'http://3.36.243.22/'
+KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/login/callback/'
 
 state = getattr(settings, 'STATE')
 
