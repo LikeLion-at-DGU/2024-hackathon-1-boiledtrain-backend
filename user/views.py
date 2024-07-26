@@ -1,3 +1,4 @@
+import json
 from django.http import HttpResponse, JsonResponse
 import requests
 from django.conf import settings
@@ -6,9 +7,11 @@ from rest_framework.decorators import api_view
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status
+
 
 from .models import Course, Diary
-from .serializers import CourseSerializer, DiarySerializer
+from .serializers import CourseSerializer, DiarySerializer, SubwaystationAndPlaceSerializer
 
 from django.shortcuts import get_object_or_404
 # 거리 계산에 필요한 라이브러리
@@ -146,8 +149,13 @@ def choose_and_add_place(request):
 
     #프론트에서 받아올 부분
     #정확한 상호명을 받아와야 함
-    subway_station = search_station("군자역") # Json 파일
-    place = search_place("유가네닭갈비 군자") # Json 파일
+    # json 파일을 받아옴
+    data = json.loads(request.body)
+    subway_input = data['subway_station']
+    place_input = data['place']
+
+    subway_station = search_station(subway_input) # Json 파일
+    place = search_place(place_input) # Json 파일
     
     lng1 = subway_station['results'][0]['geometry']['location']['lng']
     lat1 = subway_station['results'][0]['geometry']['location']['lat']
@@ -177,9 +185,6 @@ def choose_and_add_place(request):
         if 'photo_reference' in place['results'][0]['photos'][0]:
             result['place']['photo_reference'] = place['results'][0]['photos'][0]['photo_reference']
         # db 에 추가하는 동작이 필요함
-
-        course = get_object_or_404(Course, user=request.user)
-        
 
         return JsonResponse(result)
 
