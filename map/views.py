@@ -18,7 +18,7 @@ excluded_keywords = [
             '프라자', 'plaza', 'Pizza Hut', 'Compose Coffee', 'Mega Coffee', 'Krispy Kreme', '로봇카페', '무인카페', 
             '커스텀커피', 'Chicken Mania', 'BHC', 'BBQ', 'The Coffee Bean', '교촌', '피씨카페', 'Twosome Place', '샵', 
             '메가커피', '메가엠지씨커피', 'Fitness', '멕시카나', 'Tom N Toms', 'Puradak Chicken', 'COFFEE BAY', '페리카나', 
-            'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아'
+            'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', '본죽', '멕시칸치킨'
         ]
 
 ###################################################
@@ -106,33 +106,25 @@ def search_places_random(request):
 # 목적 여행
 def search_places_category(request):
     if request.method == "GET":
-        user_category = 'restaurant'
+        user_category = 'art_gallery'
 
         result = []
         i = 0 # 인덱스
 
-        # selected_stations = set()  # 중복 체크를 위한 지하철역 집합
+        selected_stations = set()  # 중복 체크를 위한 지하철역 집합
+        used_place_ids = set()  # 이미 선택된 장소 ID를 추적
+
         with open('station_nm_list.json', 'r', encoding='utf-8') as file:
             station_nm_list = json.load(file)
         random.shuffle(station_nm_list)
+        
         for _ in range(3):  # 3번 반복
             while True:  # 조건에 맞는 장소가 나올 때까지 반복
-                # 지하철역 랜덤 추출
-                cur_time = time.time()
-                # subway_url = f"{BASE_URL}subway/random"
-                # subway_response = requests.get(subway_url).json()
-                # if subway_response["SearchSTNBySubwayLineInfo"]:
-                #     station_name = subway_response["SearchSTNBySubwayLineInfo"]["row"][0]["STATION_NM"]
-                #     if station_name in selected_stations:
-                #         continue
-                    
-                #     selected_stations.add(station_name)
-                #     place = station_name + "역" 
-                # else:
-                #     return JsonResponse({'error': 'Station not found'})
-                
+                cur_time = time.time()                
                 subway = station_nm_list[i] + "역"
                 i = i + 1
+                selected_stations.add(station_nm_list[i])
+
                 # 지하철역의 이름을 추출해서 장소 검색
                 rest_api_key = settings.MAP_KEY
                 location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={subway}&inputtype=textquery&key={rest_api_key}&language=ko"
@@ -153,23 +145,60 @@ def search_places_category(request):
                                         and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
                                         and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
                                         and place.get('user_ratings_total', 0) >= 3]
+
+                    # 중복된 장소 ID가 아닌 것만 선택
+                    filtered_places = [place for place in filtered_places if place['place_id'] not in used_place_ids]
+                    
                     if filtered_places:
                         # 필터링된 장소에서 랜덤으로 하나 선택
                         selected_place = random.choice(filtered_places)
+                        used_place_ids.add(selected_place['place_id'])
+
+                        # 추가 카테고리의 장소 검색
+                        with open('place_category.json', 'r', encoding='utf-8') as f:
+                            categories = json.load(f)['places']
+                        additional_places = []
+                        selected_categories = set()  # 선택된 카테고리를 추적
+
+                        for category in categories:
+                            if category != user_category and category not in selected_categories:
+                                additional_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&key={rest_api_key}&language=ko"
+                                additional_response = requests.get(additional_url).json()
+                                if additional_response['results']:
+                                    additional_filtered = [place for place in additional_response['results']
+                                                            if place.get('rating', 0) >= 3.5
+                                                            and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
+                                                            and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
+                                                            and place.get('user_ratings_total', 0) >= 3
+                                                            and place['place_id'] not in used_place_ids]
+                                    if additional_filtered:
+                                        selected_categories.add(category)
+                                        additional_place = random.choice(additional_filtered)
+                                        additional_places.append({
+                                            'category': category,
+                                            'name': additional_place['name'],
+                                            'place_id': additional_place['place_id'],
+                                            'rating': additional_place['rating'],
+                                            'user_ratings_total': additional_place['user_ratings_total']
+                                        })
+                                        used_place_ids.add(additional_place['place_id'])
+                                        if len(additional_places) == 2:  # 두 개의 추가 장소만 선택
+                                            break
+
                         result.append({
                             'subway_station': subway,
                             'nearby_place': {
                                 'name': selected_place['name'],
-                                'place_id' : selected_place['place_id'],
+                                'place_id': selected_place['place_id'],
                                 'rating': selected_place['rating'],
                                 'user_ratings_total': selected_place['user_ratings_total']
-                            }
+                            },
+                            'additional_places': additional_places
                         })
                         end_time = time.time()
                         print("시간 : ", end_time - cur_time)
                         break
                 
-                    
         if result:
             return JsonResponse({'results': {'category': user_category, 'places': result}})
         else:
