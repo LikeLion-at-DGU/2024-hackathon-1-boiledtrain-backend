@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'subway',
     'map',
     'user',
+    #cors-headers
+    'corsheaders',
     # django-rest-framework
     'rest_framework',
     'rest_framework.authtoken',
@@ -195,9 +197,11 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
 # 로컬 개발용 주소 
     'http://localhost:3000', 
+    'http://localhost:8000', 
     'http://localhost:5173', 
     'http://127.0.0.1:3000', 
     'http://127.0.0.1:5173',
+    'http://127.0.0.1:8000',
 # 프론트엔드 도메인 또는 IP주소
 # 예를 들어, 아래와 같이 입력
     'http://프론트엔드주소', 
