@@ -40,8 +40,14 @@ def search_places_random(request):
         while True:
             if i >= len(station_nm_list):
                 return JsonResponse({'error': 'No suitable place found'})
+            
+            if station_nm_list[i] == "서울역":
+                subway = station_nm_list[i]
+            else:
+                subway = station_nm_list[i] + "역"
 
-            subway = station_nm_list[i] + "역"
+            # json 으로 출력할 역 이름
+            result_subway = station_nm_list[i]
             i = i + 1
             
             location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={subway}&inputtype=textquery&key={rest_api_key}&language=ko"
@@ -91,15 +97,18 @@ def search_places_random(request):
                             'nearby_place': {
                                 'name': selected_place['name'],
                                 'rating': selected_place['rating'],
-                                'user_ratings_total': selected_place['user_ratings_total']
+                                'user_ratings_total': selected_place['user_ratings_total'],
+                                # 'photo_reference' : selected_place['photos'][0]['photo_reference']
                             }
                         })
+                        if 'photos' in selected_place:
+                            test[len(test) - 1]['nearby_place']['photo_reference'] = selected_place['photos'][0]['photo_reference']
                         count += 1  # 장소가 추가될 때마다 카운트 증가
 
                 if success:
                     end_time = time.time()
                     print("시간 : ", end_time - cur_time)
-                    results = {'subway_station': location_response['candidates'][0]['name'], 'test': test}
+                    results = {'subway_station': result_subway, 'test': test}
                     return JsonResponse({'results': results})
 
             else:
@@ -125,7 +134,6 @@ def search_places_category(request):
 
         result = []
         i = 0 # 인덱스
-
         used_place_ids = set()  # 이미 선택된 장소 ID를 추적
 
         with open('station_nm_list.json', 'r', encoding='utf-8') as file:
@@ -134,8 +142,15 @@ def search_places_category(request):
         
         for _ in range(3):  # 3번 반복
             while True:  # 조건에 맞는 장소가 나올 때까지 반복
-                cur_time = time.time()                
-                subway = station_nm_list[i] + "역"
+                cur_time = time.time()
+                # 지하철 역을 새로 찾을 때마다 장소 카운트 초기화
+                cnt = 0
+                if station_nm_list[i] == "서울역":
+                    subway = station_nm_list[i]
+                else:
+                    subway = station_nm_list[i] + "역"
+
+                result_subway = station_nm_list[i]
                 i = i + 1
 
                 # 지하철역의 이름을 추출해서 장소 검색
@@ -166,7 +181,8 @@ def search_places_category(request):
                         # 필터링된 장소에서 랜덤으로 하나 선택
                         selected_place = random.choice(filtered_places)
                         used_place_ids.add(selected_place['place_id'])
-
+                        # 장소를 찾았으면 카운트 1 증가
+                        cnt = cnt + 1
                         # 추가 카테고리의 장소 검색
                         with open('place_category.json', 'r', encoding='utf-8') as f:
                             categories = json.load(f)['places']
@@ -187,27 +203,40 @@ def search_places_category(request):
                                     if additional_filtered:
                                         selected_categories.add(category)
                                         additional_place = random.choice(additional_filtered)
+
                                         additional_places.append({
                                             'category': category,
                                             'name': additional_place['name'],
                                             'place_id': additional_place['place_id'],
                                             'rating': additional_place['rating'],
                                             'user_ratings_total': additional_place['user_ratings_total']
+                                            # 'photo_reference' : additional_place['photos'][0]['photo_reference']
                                         })
+                                        if 'photos' in additional_place:
+                                            # 총 카운트에서 1 감소한 인덱스에 접근
+                                            additional_places[cnt - 1]['photo_reference'] = additional_place['photos'][0]['photo_reference']
                                         used_place_ids.add(additional_place['place_id'])
-                                        if len(additional_places) == 2:  # 두 개의 추가 장소만 선택
+
+
+                                        
+                                        # 장소 카운트를 1 증가
+                                        cnt = cnt + 1
+                                        # 장소 카운트가 3개가 넘어가면 break
+                                        if cnt >= 3: 
                                             break
 
                         result.append({
-                            'subway_station': subway,
+                            'subway_station': result_subway,
                             'nearby_place': {
                                 'name': selected_place['name'],
                                 'place_id': selected_place['place_id'],
                                 'rating': selected_place['rating'],
-                                'user_ratings_total': selected_place['user_ratings_total']
+                                'user_ratings_total': selected_place['user_ratings_total'],
                             },
                             'additional_places': additional_places
                         })
+                        if 'photos' in selected_place:
+                                result[len(result) - 1]['nearby_place']['photo_reference'] = selected_place['photos'][0]['photo_reference']
                         end_time = time.time()
                         print("시간 : ", end_time - cur_time)
                         break
