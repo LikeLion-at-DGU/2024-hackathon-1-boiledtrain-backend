@@ -1,18 +1,17 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-import requests, json, random
+from django.http import HttpResponse, JsonResponse
+import requests
 from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, mixins
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import api_view, permission_classes
 
-from .permissions import IsOwnerOrReadOnly
 from .models import Course, Diary
 from .serializers import CourseSerializer, DiarySerializer
 
 from django.shortcuts import get_object_or_404
+# 거리 계산에 필요한 라이브러리
 from math import radians, sin, cos, sqrt, atan2
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -125,13 +124,30 @@ def search_place(place):
 
     return location_response
 
+# 사진 출력 메소드, 미완성
+def search_photo(request):
+    rest_api_key = getattr(settings, 'MAP_KEY')
+    # 최대 넓이
+    max_width = 400
+    photo_reference = "AelY_Cus4suL2Mw6X9RweWM05EaNMMsw3JpS4J9omAkMZw3_-7bVI4-4KS1-nt-x3tNgQE5Vo23wvFt1I5GAicwA3J-Hg3fc9qEYP1HI0Sah1YvoMKgxipTHshcSTiPJumxOKxnzsBfGfrBJhbdS9qrci62I8Ht3YlfANYQXpkFZ_M-abFQk"
+    photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth={max_width}&photo_reference={photo_reference}&key={rest_api_key}&language=ko"
+    photo_response = requests.get(photo_url)
+
+    if photo_response.status_code == 200:
+        # 이미지 데이터를 바로 반환
+        return HttpResponse(photo_response.content, content_type='image/jpeg')
+    else:
+        return HttpResponse('Failed to retrieve the photo', status=photo_response.status_code)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def choose_and_add_place(request):
     # 사용자가 프론트 인터페이스에 입력한 장소 이름을 받아와서 구글 api를 통해 검색
-    
+
     #프론트에서 받아올 부분
     #정확한 상호명을 받아와야 함
     subway_station = search_station("군자역") # Json 파일
-    place = search_place("동국대학교") # Json 파일
+    place = search_place("유가네닭갈비 군자") # Json 파일
     
     lng1 = subway_station['results'][0]['geometry']['location']['lng']
     lat1 = subway_station['results'][0]['geometry']['location']['lat']
@@ -158,9 +174,15 @@ def choose_and_add_place(request):
             result["place"]['user_ratings_total'] = place['results'][0]['user_ratings_total']
         if 'types' in place['results'][0]:
             result["place"]['types'] = place['results'][0]['types']
-
+        if 'photo_reference' in place['results'][0]['photos'][0]:
+            result['place']['photo_reference'] = place['results'][0]['photos'][0]['photo_reference']
         # db 에 추가하는 동작이 필요함
+
+        course = get_object_or_404(Course, user=request.user)
+        
+
         return JsonResponse(result)
 
     else:
         return JsonResponse({"error" : "두 지점은 도보로 20분 이상의 거리입니다."})
+

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from .views import CourseViewSet, DiaryViewSet, CourseDiaryViewSet, choose_and_add_place
+from .views import CourseViewSet, DiaryViewSet, CourseDiaryViewSet, choose_and_add_place, search_photo
 
 from django.conf.urls.static import static
 from django.conf import settings
@@ -16,6 +16,7 @@ urlpatterns = [
     path('course/<int:id>/', CourseViewSet.as_view({'get': 'retrieve'}), name='course-detail'),
     path('course/<int:course_id>/diary/', CourseDiaryViewSet.as_view({'get': 'retrieve', 'post': 'create', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='course-diary'),
     path('choose_and_add_place/', choose_and_add_place, name="choose_and_add_place"),
+    path("search_photo" ,search_photo, name="search_photo"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

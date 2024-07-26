@@ -15,12 +15,3 @@ def random_station(request):
     return redirect(
         f"http://openapi.seoul.go.kr:8088/{rest_api_key}/json/SearchSTNBySubwayLineInfo/1/5/{random_station_cd}/"
     )
-
-def search_station(request):
-    # 프론트로부터 전달받을 부분
-    subway_station = "돌곶이역"
-
-    rest_api_key = getattr(settings, 'MAP_KEY')
-    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={subway_station}&key={rest_api_key}&language=kr"
-    location_response = requests.get(location_url).json()
-    return JsonResponse(location_response)
