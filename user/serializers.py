@@ -18,3 +18,10 @@ class CourseSerializer(serializers.ModelSerializer):
 class DiarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Diary
+
+class SubwaystationAndPlaceSerializer(serializers.Serializer):
+    data = serializers.JSONField()
+
+    def validate_data(self, value):
+        # 필요한 검증 로직을 여기에 추가할 수 있습니다.
+        return value
