@@ -111,7 +111,6 @@ def search_places_category(request):
         result = []
         i = 0 # 인덱스
 
-        selected_stations = set()  # 중복 체크를 위한 지하철역 집합
         used_place_ids = set()  # 이미 선택된 장소 ID를 추적
 
         with open('station_nm_list.json', 'r', encoding='utf-8') as file:
@@ -123,7 +122,6 @@ def search_places_category(request):
                 cur_time = time.time()                
                 subway = station_nm_list[i] + "역"
                 i = i + 1
-                selected_stations.add(station_nm_list[i])
 
                 # 지하철역의 이름을 추출해서 장소 검색
                 rest_api_key = settings.MAP_KEY
