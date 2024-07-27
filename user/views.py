@@ -8,26 +8,41 @@ from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
-
+from .permissions import IsCourseOwnerOrReadOnly
 
 from .models import Course, Diary
-from .serializers import CourseSerializer, DiarySerializer, SubwaystationAndPlaceSerializer
+from .serializers import CourseSerializer, DiarySerializer, CourseDiarySerializer
 
 from django.shortcuts import get_object_or_404
 # 거리 계산에 필요한 라이브러리
 from math import radians, sin, cos, sqrt, atan2
 
 class CourseViewSet(viewsets.ModelViewSet):
-    # queryset = Course.objects.all()
-    serializer_class = CourseSerializer
-    permission_classes = [AllowAny]
-    lookup_field = 'id'
 
+    # create 일 때는 다이어리 정보가 없는 시리얼라이저 출력
+    def get_serializer_class(self):
+        if self.action == "post" :
+            return CourseSerializer
+        else :
+            return CourseDiarySerializer
+        
     def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return Course.objects.filter(user=self.request.user)
-        return Course.objects.all()
-    #아직 로그인 기능이 구현되지 않아 모두가 접근할 수 있도록 설정해놓음
+        return Course.objects.filter(user=self.request.user)
+    
+    def get_permissions(self):
+        return [IsCourseOwnerOrReadOnly()]
+        
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # jwt 토큰으로부터 유저 정보를 전달 받아서 저장
+        serializer.save(user=request.user)
+        return Response({
+            "message " : "코스가 생성되었습니다.",
+            "course" : serializer.data    
+        })
 
 #다이어리 디테일, 여기서 수정,삭제
 class DiaryViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
@@ -165,9 +180,8 @@ def choose_and_add_place(request):
 
     if is_good(lng1 , lat1 , lng2 , lat2): # 20분 이내 거리인지 확인
         result = {
-            "subway_station" : {
-                "name" : subway_station['results'][0]['name']
-            },
+            "subway_station" : subway_station['results'][0]['name'],
+
             "place" : {
                 "name" : place['results'][0]['name']
             }
@@ -182,7 +196,7 @@ def choose_and_add_place(request):
             result["place"]['user_ratings_total'] = place['results'][0]['user_ratings_total']
         if 'types' in place['results'][0]:
             result["place"]['types'] = place['results'][0]['types']
-        if 'photo_reference' in place['results'][0]['photos'][0]:
+        if  'photo' in place['results'][0] and 'photo_reference' in place['results'][0]['photos'][0]:
             result['place']['photo_reference'] = place['results'][0]['photos'][0]['photo_reference']
         # db 에 추가하는 동작이 필요함
 
