@@ -21,6 +21,22 @@ excluded_keywords = [
             'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', '본죽', '멕시칸치킨'
         ]
 
+category_ko = {
+            'aquarium': '아쿠아리움',
+            'art_gallery': '아트갤러리',
+            'bakery': '베이커리',
+            'bar': '술집',
+            'book_store': '서점',
+            'cafe': '카페',
+            'campground': '캠핑장',
+            'department_store': '쇼핑몰',
+            'museum': '박물관',
+            'park': '공원',
+            'restaurant': '음식점',
+            'spa': '스파',
+            'zoo': '동물원'
+        }
+
 ###################################################
 # 랜덤 여행
 def search_places_random(request):
@@ -78,7 +94,7 @@ def search_places_random(request):
                         if not (15 <= current_hour <= 22):
                             continue
 
-                    nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&key={rest_api_key}&language=ko"
+                    nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&lanbuage=ko&key={rest_api_key}&language=ko"
                     nearby_response = requests.get(nearby_url).json()
 
                     filtered_places = [place for place in nearby_response['results']
@@ -93,7 +109,7 @@ def search_places_random(request):
                         selected_places_ids.add(selected_place['place_id'])
 
                         test.append({
-                            'category': category,
+                            'category': category_ko.get(category, category),
                             'nearby_place': {
                                 'name': selected_place['name'],
                                 'rating': selected_place['rating'],
@@ -108,7 +124,7 @@ def search_places_random(request):
                 if success:
                     end_time = time.time()
                     print("시간 : ", end_time - cur_time)
-                    results = {'subway_station': result_subway, 'test': test}
+                    results = {'subway_station': result_subway, 'places': test}
                     return JsonResponse({'results': results})
 
             else:
@@ -118,7 +134,7 @@ def search_places_random(request):
 # 목적 여행
 def search_places_category(request):
     if request.method == "GET":
-        user_category = 'restaurant'
+        user_category = 'art_gallery'
 #        # 사용자의 category 받기
 #        user_category = request.GET.get('category')
 #
@@ -205,7 +221,7 @@ def search_places_category(request):
                                         additional_place = random.choice(additional_filtered)
 
                                         additional_places.append({
-                                            'category': category,
+                                            'category': category_ko.get(category,category),
                                             'name': additional_place['name'],
                                             'place_id': additional_place['place_id'],
                                             'rating': additional_place['rating'],
