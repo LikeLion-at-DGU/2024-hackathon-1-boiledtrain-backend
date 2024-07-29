@@ -4,7 +4,6 @@ import requests, json, random, os
 from django.conf import settings
 from rest_framework import viewsets, mixins
 from datetime import datetime
-from django.views.decorators.csrf import csrf_exempt
 import time
 
 
@@ -18,7 +17,8 @@ excluded_keywords = [
             '프라자', 'plaza', 'Pizza Hut', 'Compose Coffee', 'Mega Coffee', 'Krispy Kreme', '로봇카페', '무인카페', 
             '커스텀커피', 'Chicken Mania', 'BHC', 'BBQ', 'The Coffee Bean', '교촌', '피씨카페', 'Twosome Place', '샵', 
             '메가커피', '메가엠지씨커피', 'Fitness', '멕시카나', 'Tom N Toms', 'Puradak Chicken', 'COFFEE BAY', '페리카나', 
-            'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', '본죽', '멕시칸치킨'
+            'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', 
+            '본죽', '멕시칸치킨', '김가네'
         ]
 
 category_ko = {
@@ -89,10 +89,10 @@ def search_places_random(request):
                     category = categories[j]
                     j += 1
 
-                    if category == "bar":
-                        current_hour = datetime.now().hour
-                        if not (15 <= current_hour <= 22):
-                            continue
+                    # if category == "bar":
+                    #     current_hour = datetime.now().hour
+                    #     if not (15 <= current_hour <= 22):
+                    #         continue
 
                     nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&lanbuage=ko&key={rest_api_key}&language=ko"
                     nearby_response = requests.get(nearby_url).json()
@@ -112,6 +112,7 @@ def search_places_random(request):
                             'category': category_ko.get(category, category),
                             'nearby_place': {
                                 'name': selected_place['name'],
+                                'place_id': selected_place['place_id'],
                                 'rating': selected_place['rating'],
                                 'user_ratings_total': selected_place['user_ratings_total'],
                                 # 'photo_reference' : selected_place['photos'][0]['photo_reference']
@@ -232,7 +233,6 @@ def search_places_category(request):
                                             # 총 카운트에서 1 감소한 인덱스에 접근
                                             additional_places[cnt - 1]['photo_reference'] = additional_place['photos'][0]['photo_reference']
                                         used_place_ids.add(additional_place['place_id'])
-
 
                                         
                                         # 장소 카운트를 1 증가
