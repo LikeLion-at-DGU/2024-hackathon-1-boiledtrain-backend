@@ -127,8 +127,7 @@ def search_places_random(request):
                 if success:
                     end_time = time.time()
                     print("시간 : ", end_time - cur_time)
-                    results = {'subway_station': result_subway, 'places': test}
-                    return JsonResponse({'results': results})
+                    return JsonResponse({'subway_station': result_subway, 'places': test})
 
             else:
                 return JsonResponse({'error': 'Place not found'})
