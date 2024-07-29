@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'subway',
     'map',
     'user',
+    #cors-headers
+    'corsheaders',
     # django-rest-framework
     'rest_framework',
     'rest_framework.authtoken',
@@ -100,9 +102,10 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -190,16 +193,26 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # corsheaders
-CORS_ALLOW_ALL_ORIGINS = False
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
 # 로컬 개발용 주소 
     'http://localhost:3000', 
+    'http://localhost:8000', 
     'http://localhost:5173', 
+    'http://3.36.243.22',
     'http://127.0.0.1:3000', 
     'http://127.0.0.1:5173',
+    'http://127.0.0.1:8000',
 # 프론트엔드 도메인 또는 IP주소
 # 예를 들어, 아래와 같이 입력
     'http://프론트엔드주소', 
     'http://프론트주소:포트번호', 
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://3.36.243.22',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
 ]

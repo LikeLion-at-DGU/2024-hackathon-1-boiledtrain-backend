@@ -1,151 +1,140 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-import requests, json, random
+import requests, json, random, os
 from django.conf import settings
 from rest_framework import viewsets, mixins
 from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+import time
 
 
 BASE_URL = 'http://localhost:8000/'
+
+excluded_keywords = [
+            'Dunkin', '배스킨라빈스', 'KFC', 'Outback Steakhouse', "Domino's", 'Bonjuk', 'Burger King',
+            '네네치킨', 'Pelicana Chicken', 'Bonjug', 'Pizza Maru', '파리바게', 'Paris Baguette', '뚜레쥬르', 'Tous Les Jours',
+            'Starbucks', '스타벅스', 'LOTTERIA', '설빙', 'Sulbing', 'Hollys', "Holly's", 'Ediya', 
+            'Pizza School', 'Daiso', 'KyoChon', 'Kyochon', "Mom's Touch", '스터디카페', '키즈카페', '7080', '상가', 
+            '프라자', 'plaza', 'Pizza Hut', 'Compose Coffee', 'Mega Coffee', 'Krispy Kreme', '로봇카페', '무인카페', 
+            '커스텀커피', 'Chicken Mania', 'BHC', 'BBQ', 'The Coffee Bean', '교촌', '피씨카페', 'Twosome Place', '샵', 
+            '메가커피', '메가엠지씨커피', 'Fitness', '멕시카나', 'Tom N Toms', 'Puradak Chicken', 'COFFEE BAY', '페리카나', 
+            'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', '본죽', '멕시칸치킨'
+        ]
+
+category_ko = {
+            'aquarium': '아쿠아리움',
+            'art_gallery': '아트갤러리',
+            'bakery': '베이커리',
+            'bar': '술집',
+            'book_store': '서점',
+            'cafe': '카페',
+            'campground': '캠핑장',
+            'department_store': '쇼핑몰',
+            'museum': '박물관',
+            'park': '공원',
+            'restaurant': '음식점',
+            'spa': '스파',
+            'zoo': '동물원'
+        }
 
 ###################################################
 # 랜덤 여행
 def search_places_random(request):
     if request.method == "GET":
-        # 지하철역 랜덤 추출
-        subway_url = f"{BASE_URL}subway/random"
-        subway_response = requests.get(subway_url).json()
-        if subway_response["SearchSTNBySubwayLineInfo"]:
-            place = subway_response["SearchSTNBySubwayLineInfo"]["row"][0]["STATION_NM"] + "역"
-        else:
-            return JsonResponse({'error': 'Station not found'})
-        
-        # 지하철역의 이름을 추출해서 장소 검색
+        with open('station_nm_list.json', 'r', encoding='utf-8') as file:
+            station_nm_list = json.load(file)
+        with open('place_category.json', 'r', encoding='utf-8') as file:
+            categories = json.load(file)['places']
+        random.shuffle(station_nm_list)
+        random.shuffle(categories)
+
         rest_api_key = getattr(settings, 'MAP_KEY')
-        location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={place}&inputtype=textquery&key={rest_api_key}"
-        location_response = requests.get(location_url).json()
+        cur_time = time.time()
 
-        # 검색된 정보에서 위도, 경도를 추출하여 근처 장소 검색
-        if location_response['candidates']:
-            location = location_response['candidates'][0]['geometry']['location']
-            lat = location['lat']
-            lng = location['lng']
+        i = 0  # station_nm_list 인덱스 초기화
 
-            # place_category.json 파일에서 랜덤 카테고리 추출
-            with open('place_category.json', 'r', encoding='utf-8') as f:
-                categories = json.load(f)['places']
+        while True:
+            if i >= len(station_nm_list):
+                return JsonResponse({'error': 'No suitable place found'})
+            
+            if station_nm_list[i] == "서울역":
+                subway = station_nm_list[i]
+            else:
+                subway = station_nm_list[i] + "역"
 
-            # 지하철 정보 json 저장
-            selected_places_ids = set()  # 중복 체크를 위한 장소 ID 집합
-            selected_categories = set()  # 중복 체크를 위한 카테고리 집합
-            test = []
+            # json 으로 출력할 역 이름
+            result_subway = station_nm_list[i]
+            i = i + 1
+            
+            location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={subway}&inputtype=textquery&key={rest_api_key}&language=ko"
+            location_response = requests.get(location_url).json()
 
-            for _ in range(3):  # 3번 반복
-                while True:
-                    available_categories = [category for category in categories if category not in selected_categories]
-                    if not available_categories:
+            if location_response['candidates']:
+                location = location_response['candidates'][0]['geometry']['location']
+                lat = location['lat']
+                lng = location['lng']
+
+                selected_places_ids = set()
+                test = []
+                success = True
+
+                count = 0  # 장소 카운트 초기화
+                j = 0  # categories 인덱스 초기화
+
+                while count < 3:  # 3곳의 장소가 선택될 때까지 반복
+                    if j >= len(categories):
+                        success = False
                         break
-                    category = random.choice(available_categories)
 
-                    # 시간 조건
+                    category = categories[j]
+                    j += 1
+
                     if category == "bar":
                         current_hour = datetime.now().hour
-                        if not (15 <= current_hour <= 22):  # 오후 3시 ~ 오후 10시 사이가 아닐 경우
+                        if not (15 <= current_hour <= 22):
                             continue
 
-                    nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=kr&type={category}&key={rest_api_key}&language=kr"
+                    nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&lanbuage=ko&key={rest_api_key}&language=ko"
                     nearby_response = requests.get(nearby_url).json()
 
-                    # rating이 4.0 이상인 곳만 필터링
                     filtered_places = [place for place in nearby_response['results']
                                         if place.get('rating', 0) >= 4.0
                                         and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
-                                        and not place.get('name', '').startswith(("Paik's", 'Dunkin', '배스킨라빈스', 'KFC', 'Outback Steakhouse', "Domino's", 'Bonjuk', 'Burger King', '네네치킨', 'Pelicana Chicken', 'Bonjug', 'Pizza Maru'))
-                                        and '파리바게' not in place.get('name', '')
-                                        and 'Paris Baguette' not in place.get('name', '')
-                                        and '뚜레쥬르' not in place.get('name', '')
-                                        and 'Tous Les Jours' not in place.get('name', '')
-                                        and 'Starbucks' not in place.get('name', '')
-                                        and '스타벅스' not in place.get('name', '')
-                                        and 'LOTTERIA' not in place.get('name', '')
-                                        and '설빙' not in place.get('name', '')
-                                        and 'Sulbing' not in place.get('name', '')
-                                        and 'Hollys' not in place.get('name', '')
-                                        and "Holly's" not in place.get('name', '')
-                                        and '인쌩맥주' not in place.get('name', '')
-                                        and '장미맨숀' not in place.get('name', '')
-                                        and 'Ediya' not in place.get('name', '')
-                                        and 'Pizza School' not in place.get('name', '')
-                                        and 'Daiso' not in place.get('name', '')
-                                        and 'KyoChon' not in place.get('name', '')
-                                        and 'Kyochon' not in place.get('name', '')
-                                        and "Mom's Touch" not in place.get('name', '')
-                                        and '스터디카페' not in place.get('name', '')
-                                        and '키즈카페' not in place.get('name', '')
-                                        and '7080' not in place.get('name', '')
-                                        and '상가' not in place.get('name', '')
-                                        and '프라자' not in place.get('name', '')
-                                        and 'plaza' not in place.get('name', '')
-                                        and 'Pizza Hut' not in place.get('name', '')
-                                        and 'Compose Coffee' not in place.get('name', '')
-                                        and 'Mega Coffee' not in place.get('name', '')
-                                        and 'Krispy Kreme' not in place.get('name', '')
-                                        and '로봇카페' not in place.get('name', '')
-                                        and '무인카페' not in place.get('name', '')
-                                        and '커스텀커피' not in place.get('name', '')
-                                        and 'Chicken Mania' not in place.get('name', '')
-                                        and 'BHC' not in place.get('name', '')
-                                        and 'BBQ' not in place.get('name', '')
-                                        and 'The Coffee Bean' not in place.get('name', '')
-                                        and '교촌' not in place.get('name', '')
-                                        and '피씨카페' not in place.get('name', '')
-                                        and 'Twosome Place' not in place.get('name', '')
-                                        and '샵' not in place.get('name', '')
-                                        and '메가커피' not in place.get('name', '')
-                                        and '메가엠지씨커피' not in place.get('name', '')
-                                        and 'Fitness' not in place.get('name', '')
-                                        and '멕시카나' not in place.get('name', '')
-                                        and 'Tom N Toms' not in place.get('name', '')
-                                        and 'Puradak Chicken' not in place.get('name', '')
-                                        and 'COFFEE BAY' not in place.get('name', '')
-                                        and '페리카나' not in place.get('name', '')
-                                        and 'paris baguette' not in place.get('name', '')
-                                        and 'Pascucci' not in place.get('name', '')
-                                        and 'Gongcha' not in place.get('name', '')
+                                        and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
                                         and place.get('user_ratings_total', 0) >= 5
-                                        and place.get('place_id') not in selected_places_ids  # 중복 체크
-                                        ]
-                    if len(filtered_places) != 0:
-                        break
+                                        and place.get('place_id') not in selected_places_ids]
 
-                # 필터링된 장소에서 랜덤으로 하나 선택
-                selected_place = random.choice(filtered_places)
-                selected_places_ids.add(selected_place['place_id'])  # 선택된 장소 ID 저장
-                selected_categories.add(category)  # 선택된 카테고리 저장
+                    if filtered_places:
+                        selected_place = random.choice(filtered_places)
+                        selected_places_ids.add(selected_place['place_id'])
 
-                test.append({
-                    'category': category,
-                    'nearby_place': {
-                        'name' : selected_place['name'],
-                        'rating' : selected_place['rating'],
-                        'user_ratings_total' : selected_place['user_ratings_total']
-                    }
-                })
+                        test.append({
+                            'category': category_ko.get(category, category),
+                            'nearby_place': {
+                                'name': selected_place['name'],
+                                'rating': selected_place['rating'],
+                                'user_ratings_total': selected_place['user_ratings_total'],
+                                # 'photo_reference' : selected_place['photos'][0]['photo_reference']
+                            }
+                        })
+                        if 'photos' in selected_place:
+                            test[len(test) - 1]['nearby_place']['photo_reference'] = selected_place['photos'][0]['photo_reference']
+                        count += 1  # 장소가 추가될 때마다 카운트 증가
 
-            results = {'subway_station': location_response['candidates'][0]['name'], 'test' : test}
-            result = {
-                'results': results  # 3개의 카테고리와 장소를 포함
-            }
-            return JsonResponse(result)
+                if success:
+                    end_time = time.time()
+                    print("시간 : ", end_time - cur_time)
+                    results = {'subway_station': result_subway, 'places': test}
+                    return JsonResponse({'results': results})
 
-        else:
-            return JsonResponse({'error': 'Place not found'})
-    return JsonResponse(location_response)
+            else:
+                return JsonResponse({'error': 'Place not found'})
+    return JsonResponse({'error': 'Invalid request method'})
 ###################################################################
 # 목적 여행
 def search_places_category(request):
     if request.method == "GET":
-        user_category = 'cafe'
+        user_category = 'art_gallery'
 #        # 사용자의 category 받기
 #        user_category = request.GET.get('category')
 #
@@ -158,28 +147,31 @@ def search_places_category(request):
 #
 #        if user_category not in categories:
 #            return JsonResponse({'error': 'Invalid category'})
-        
-        result = []
-        selected_stations = set() # 중복 체크를 위한 지하철역 집합
 
-        for _ in range(3): # 3번 반복
-            while True: # 조건에 맞는 장소가 나올 때까지 반복
-                # 지하철역 랜덤 추출
-                subway_url = f"{BASE_URL}subway/random"
-                subway_response = requests.get(subway_url).json()
-                if subway_response["SearchSTNBySubwayLineInfo"]:
-                    station_name = subway_response["SearchSTNBySubwayLineInfo"]["row"][0]["STATION_NM"]
-                    if station_name in selected_stations:
-                        continue
-                    
-                    selected_stations.add(station_name)
-                    place = station_name + "역" 
+        result = []
+        i = 0 # 인덱스
+        used_place_ids = set()  # 이미 선택된 장소 ID를 추적
+
+        with open('station_nm_list.json', 'r', encoding='utf-8') as file:
+            station_nm_list = json.load(file)
+        random.shuffle(station_nm_list)
+        
+        for _ in range(3):  # 3번 반복
+            while True:  # 조건에 맞는 장소가 나올 때까지 반복
+                cur_time = time.time()
+                # 지하철 역을 새로 찾을 때마다 장소 카운트 초기화
+                cnt = 0
+                if station_nm_list[i] == "서울역":
+                    subway = station_nm_list[i]
                 else:
-                    return JsonResponse({'error': 'Station not found'})
+                    subway = station_nm_list[i] + "역"
+
+                result_subway = station_nm_list[i]
+                i = i + 1
 
                 # 지하철역의 이름을 추출해서 장소 검색
-                rest_api_key = getattr(settings, 'MAP_KEY')
-                location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={place}&inputtype=textquery&key={rest_api_key}"
+                rest_api_key = settings.MAP_KEY
+                location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={subway}&inputtype=textquery&key={rest_api_key}&language=ko"
                 location_response = requests.get(location_url).json()
 
                 # 검색된 정보에서 위도, 경도를 추출하여 근처 장소 검색
@@ -188,81 +180,86 @@ def search_places_category(request):
                     lat = location['lat']
                     lng = location['lng']
 
-                    nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1500&language=kr&type={user_category}&key={rest_api_key}&language=kr"
+                    nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={user_category}&key={rest_api_key}&language=ko"
                     nearby_response = requests.get(nearby_url).json()
 
                     # rating이 4.0 이상인 곳만 필터링
                     filtered_places = [place for place in nearby_response['results']
                                         if place.get('rating', 0) >= 4.0
                                         and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
-                                        and not place.get('name', '').startswith(("Paik's", 'Dunkin', '배스킨라빈스', 'KFC', 'Outback Steakhouse', "Domino's", 'Bonjuk', 'Burger King', '네네치킨', 'Pelicana Chicken', 'Bonjug', 'Pizza Maru'))
-                                        and '파리바게' not in place.get('name', '')
-                                        and 'Paris Baguette' not in place.get('name', '')
-                                        and '뚜레쥬르' not in place.get('name', '')
-                                        and 'Tous Les Jours' not in place.get('name', '')
-                                        and 'Starbucks' not in place.get('name', '')
-                                        and '스타벅스' not in place.get('name', '')
-                                        and 'LOTTERIA' not in place.get('name', '')
-                                        and '설빙' not in place.get('name', '')
-                                        and 'Sulbing' not in place.get('name', '')
-                                        and 'Hollys' not in place.get('name', '')
-                                        and "Holly's" not in place.get('name', '')
-                                        and '인쌩맥주' not in place.get('name', '')
-                                        and '장미맨숀' not in place.get('name', '')
-                                        and 'Ediya' not in place.get('name', '')
-                                        and 'Pizza School' not in place.get('name', '')
-                                        and 'Daiso' not in place.get('name', '')
-                                        and 'KyoChon' not in place.get('name', '')
-                                        and 'Kyochon' not in place.get('name', '')
-                                        and "Mom's Touch" not in place.get('name', '')
-                                        and '스터디카페' not in place.get('name', '')
-                                        and '키즈카페' not in place.get('name', '')
-                                        and '7080' not in place.get('name', '')
-                                        and '상가' not in place.get('name', '')
-                                        and '프라자' not in place.get('name', '')
-                                        and 'plaza' not in place.get('name', '')
-                                        and 'Pizza Hut' not in place.get('name', '')
-                                        and 'Compose Coffee' not in place.get('name', '')
-                                        and 'Mega Coffee' not in place.get('name', '')
-                                        and 'Krispy Kreme' not in place.get('name', '')
-                                        and '로봇카페' not in place.get('name', '')
-                                        and '무인카페' not in place.get('name', '')
-                                        and '커스텀커피' not in place.get('name', '')
-                                        and 'Chicken Mania' not in place.get('name', '')
-                                        and 'BHC' not in place.get('name', '')
-                                        and 'BBQ' not in place.get('name', '')
-                                        and 'The Coffee Bean' not in place.get('name', '')
-                                        and '교촌' not in place.get('name', '')
-                                        and '피씨카페' not in place.get('name', '')
-                                        and 'Twosome Place' not in place.get('name', '')
-                                        and '샵' not in place.get('name', '')
-                                        and '메가커피' not in place.get('name', '')
-                                        and '메가엠지씨커피' not in place.get('name', '')
-                                        and 'Fitness' not in place.get('name', '')
-                                        and '멕시카나' not in place.get('name', '')
-                                        and 'Tom N Toms' not in place.get('name', '')
-                                        and 'Puradak Chicken' not in place.get('name', '')
-                                        and 'COFFEE BAY' not in place.get('name', '')
-                                        and '페리카나' not in place.get('name', '')
-                                        and 'paris baguette' not in place.get('name', '')
-                                        and 'Pascucci' not in place.get('name', '')
-                                        and 'Gongcha' not in place.get('name', '')
-                                        and place.get('user_ratings_total', 0) >= 5]
+                                        and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
+                                        and place.get('user_ratings_total', 0) >= 3]
+
+                    # 중복된 장소 ID가 아닌 것만 선택
+                    filtered_places = [place for place in filtered_places if place['place_id'] not in used_place_ids]
+                    
                     if filtered_places:
                         # 필터링된 장소에서 랜덤으로 하나 선택
                         selected_place = random.choice(filtered_places)
+                        used_place_ids.add(selected_place['place_id'])
+                        # 장소를 찾았으면 카운트 1 증가
+                        cnt = cnt + 1
+                        # 추가 카테고리의 장소 검색
+                        with open('place_category.json', 'r', encoding='utf-8') as f:
+                            categories = json.load(f)['places']
+                        additional_places = []
+                        selected_categories = set()  # 선택된 카테고리를 추적
+
+                        for category in categories:
+                            if category != user_category and category not in selected_categories:
+                                additional_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&key={rest_api_key}&language=ko"
+                                additional_response = requests.get(additional_url).json()
+                                if additional_response['results']:
+                                    additional_filtered = [place for place in additional_response['results']
+                                                            if place.get('rating', 0) >= 3.5
+                                                            and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
+                                                            and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
+                                                            and place.get('user_ratings_total', 0) >= 3
+                                                            and place['place_id'] not in used_place_ids]
+                                    if additional_filtered:
+                                        selected_categories.add(category)
+                                        additional_place = random.choice(additional_filtered)
+
+                                        additional_places.append({
+                                            'category': category_ko.get(category,category),
+                                            'name': additional_place['name'],
+                                            'place_id': additional_place['place_id'],
+                                            'rating': additional_place['rating'],
+                                            'user_ratings_total': additional_place['user_ratings_total']
+                                            # 'photo_reference' : additional_place['photos'][0]['photo_reference']
+                                        })
+                                        if 'photos' in additional_place:
+                                            # 총 카운트에서 1 감소한 인덱스에 접근
+                                            additional_places[cnt - 1]['photo_reference'] = additional_place['photos'][0]['photo_reference']
+                                        used_place_ids.add(additional_place['place_id'])
+
+
+                                        
+                                        # 장소 카운트를 1 증가
+                                        cnt = cnt + 1
+                                        # 장소 카운트가 3개가 넘어가면 break
+                                        if cnt >= 3: 
+                                            break
+
                         result.append({
-                            'subway_station': location_response['candidates'][0]['name'],
+                            'subway_station': result_subway,
                             'nearby_place': {
                                 'name': selected_place['name'],
+                                'place_id': selected_place['place_id'],
                                 'rating': selected_place['rating'],
-                                'user_ratings_total': selected_place['user_ratings_total']
-                            }
+                                'user_ratings_total': selected_place['user_ratings_total'],
+                            },
+                            'additional_places': additional_places
                         })
+                        if 'photos' in selected_place:
+                                result[len(result) - 1]['nearby_place']['photo_reference'] = selected_place['photos'][0]['photo_reference']
+                        end_time = time.time()
+                        print("시간 : ", end_time - cur_time)
                         break
+                
         if result:
-            return JsonResponse({'category': user_category, 'result': result})
+            return JsonResponse({'results': {'category': user_category, 'places': result}})
         else:
             return JsonResponse({'error': 'No suitable places found'})
-
-    return JsonResponse({'error': 'Invalid request method'})
+        
+    return JsonResponse({'results': {'error': 'Invalid request method'}})

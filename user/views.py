@@ -1,31 +1,48 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-import requests, json, random
+import json
+from django.http import HttpResponse, JsonResponse
+import requests
 from django.conf import settings
-# Create your views here.
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, mixins
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status
+from .permissions import IsCourseOwnerOrReadOnly
 
-from .permissions import IsOwnerOrReadOnly
 from .models import Course, Diary
-from .serializers import CourseSerializer, DiarySerializer
+from .serializers import CourseSerializer, DiarySerializer, CourseDiarySerializer
 
 from django.shortcuts import get_object_or_404
+# 거리 계산에 필요한 라이브러리
+from math import radians, sin, cos, sqrt, atan2
 
 class CourseViewSet(viewsets.ModelViewSet):
-    # queryset = Course.objects.all()
-    serializer_class = CourseSerializer
-    permission_classes = [AllowAny]
-    lookup_field = 'id'
 
+    # create 일 때는 다이어리 정보가 없는 시리얼라이저 출력
+    def get_serializer_class(self):
+        if self.action == "post" :
+            return CourseSerializer
+        else :
+            return CourseDiarySerializer
+        
     def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return Course.objects.filter(user=self.request.user)
-        return Course.objects.all()
-    #아직 로그인 기능이 구현되지 않아 모두가 접근할 수 있도록 설정해놓음
+        return Course.objects.filter(user=self.request.user)
+    
+    def get_permissions(self):
+        return [IsCourseOwnerOrReadOnly()]
+        
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # jwt 토큰으로부터 유저 정보를 전달 받아서 저장
+        serializer.save(user=request.user)
+        return Response({
+            "message " : "코스가 생성되었습니다.",
+            "course" : serializer.data    
+        })
 
 #다이어리 디테일, 여기서 수정,삭제
 class DiaryViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
@@ -71,35 +88,120 @@ class CourseDiaryViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixin
         instance.delete()
         return Response(status=204)
 
+
 # M.K 파트
-def choose_place(request):
+
+def haversine(lon1, lat1, lon2, lat2):
+    # 지구 반지름 (킬로미터 단위)
+    R = 6371.0
+
+    # 위도와 경도를 라디안 단위로 변환
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+
+    # 차이 계산
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+
+    # 하버사인 공식
+    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    distance = R * c
+
+    return distance
+
+def is_good(lon1, lat1, lon2, lat2):
+
+    # 두 지점 간 거리 계산
+    distance = haversine(lon1, lat1, lon2, lat2)
+
+    # 도보 시간 (시간 단위)
+    walking_speed_kmh = 5  # 시속 5킬로미터
+    walking_time_hours = 20 / 60  # 20분을 시간 단위로 변환
+
+    # 20분 동안 도보 가능한 최대 거리
+    max_walking_distance = walking_speed_kmh * walking_time_hours
+
+    # 거리 비교
+    if distance <= max_walking_distance:
+        # 도보로 20분 이내면 True 반환
+        return True
+    else:
+        return False
+
+def search_station(subway_station):
+    rest_api_key = getattr(settings, 'MAP_KEY')
+    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={subway_station}&key={rest_api_key}&language=kr"
+    location_response = requests.get(location_url).json()
+    
+    return location_response
+
+def search_place(place):
+    rest_api_key = getattr(settings, 'MAP_KEY')
+    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={place}&key={rest_api_key}&language=ko"
+    location_response = requests.get(location_url).json()
+
+    return location_response
+
+# 사진 출력 메소드, 미완성
+def search_photo(request):
+    rest_api_key = getattr(settings, 'MAP_KEY')
+    # 최대 넓이
+    max_width = 400
+    photo_reference = "AelY_Cus4suL2Mw6X9RweWM05EaNMMsw3JpS4J9omAkMZw3_-7bVI4-4KS1-nt-x3tNgQE5Vo23wvFt1I5GAicwA3J-Hg3fc9qEYP1HI0Sah1YvoMKgxipTHshcSTiPJumxOKxnzsBfGfrBJhbdS9qrci62I8Ht3YlfANYQXpkFZ_M-abFQk"
+    photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth={max_width}&photo_reference={photo_reference}&key={rest_api_key}&language=ko"
+    photo_response = requests.get(photo_url)
+
+    if photo_response.status_code == 200:
+        # 이미지 데이터를 바로 반환
+        return HttpResponse(photo_response.content, content_type='image/jpeg')
+    else:
+        return HttpResponse('Failed to retrieve the photo', status=photo_response.status_code)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def choose_and_add_place(request):
     # 사용자가 프론트 인터페이스에 입력한 장소 이름을 받아와서 구글 api를 통해 검색
-    rest_api_key = getattr(settings, 'MAP_KEY')
+
     #프론트에서 받아올 부분
-    subway_station = "돌곶이역"
-    place = "길음 롯데리아"
+    #정확한 상호명을 받아와야 함
+    # json 파일을 받아옴
+    data = json.loads(request.body)
+    subway_input = data['subway_station']
+    place_input = data['place']
+
+    subway_station = search_station(subway_input) # Json 파일
+    place = search_place(place_input) # Json 파일
     
-    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={place}&key={rest_api_key}&language=kr"
-    location_response = requests.get(location_url).json()
+    lng1 = subway_station['results'][0]['geometry']['location']['lng']
+    lat1 = subway_station['results'][0]['geometry']['location']['lat']
+    lng2 = place['results'][0]['geometry']['location']['lng']
+    lat2 = place['results'][0]['geometry']['location']['lat']
     
-    return JsonResponse(location_response)
 
-def add_place(request):
+    if is_good(lng1 , lat1 , lng2 , lat2): # 20분 이내 거리인지 확인
+        result = {
+            "subway_station" : subway_station['results'][0]['name'],
 
-    # choose_place 에서 선택한 장소의 id 를 전달받아서 세부 정보를 가져온 후 db 에 json 형태로 저장
-    rest_api_key = getattr(settings, 'MAP_KEY')
-    #프론트에서 받아올 부분
-    place_id = "경춘선 숲길"
-    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={place}&key={rest_api_key}&language=kr"
-    location_response = requests.get(location_url).json()
-    
-    # if location_response['candidates']:
-    #     location = location_response['candidates'][0]['geometry']['location']
-    #     lat = location['lat']
-    #     lng = location['lng']
-    # detail_url = f"https://maps.googleapis.com/maps/api/place/details/json?fields=name%2Crating%2Cformatted_phone_number&place_id=ChIJN1t_tDeuEmsRUsoyG83frY4&key={rest_api_key}"
-    # detail_response = requests.get(detail_url).json()
-    return JsonResponse(location_response)
+            "place" : {
+                "name" : place['results'][0]['name']
+            }
+        }
+        if 'formatted_address' in place['results'][0]:
+            result["place"]['address'] = place['results'][0]['formatted_address']
+        if 'opening_hours' in place['results'][0]:
+            result["place"]['opening_hours'] = place['results'][0]['opening_hours']
+        if 'rating' in place['results'][0]:
+            result["place"]['rating'] = place['results'][0]['rating']
+        if 'user_ratings_total' in place['results'][0]:
+            result["place"]['user_ratings_total'] = place['results'][0]['user_ratings_total']
+        if 'types' in place['results'][0]:
+            result["place"]['types'] = place['results'][0]['types']
+        if  'photo' in place['results'][0] and 'photo_reference' in place['results'][0]['photos'][0]:
+            result['place']['photo_reference'] = place['results'][0]['photos'][0]['photo_reference']
+        # db 에 추가하는 동작이 필요함
 
+        return JsonResponse(result)
 
+    else:
+        return JsonResponse({"error" : "두 지점은 도보로 20분 이상의 거리입니다."})
 

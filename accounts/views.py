@@ -18,7 +18,7 @@ from .models import User
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserInfoSerializer
 
-BASE_URL = 'http://localhost:8000/'
+BASE_URL = 'http://3.36.243.22/'
 KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/login/callback/'
 
 state = getattr(settings, 'STATE')
@@ -38,7 +38,7 @@ class Userinfo(viewsets.GenericViewSet, mixins.ListModelMixin):
 def kakao_login(request):
     rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
     return redirect(
-        f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={KAKAO_CALLBACK_URI}&response_type=code&prompt=login"
+        f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={KAKAO_CALLBACK_URI}&response_type=code"
     )
 
 
