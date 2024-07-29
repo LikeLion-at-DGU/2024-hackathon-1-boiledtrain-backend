@@ -18,7 +18,8 @@ excluded_keywords = [
             '커스텀커피', 'Chicken Mania', 'BHC', 'BBQ', 'The Coffee Bean', '교촌', '피씨카페', 'Twosome Place', '샵', 
             '메가커피', '메가엠지씨커피', 'Fitness', '멕시카나', 'Tom N Toms', 'Puradak Chicken', 'COFFEE BAY', '페리카나', 
             'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', 
-            '본죽', '멕시칸치킨', '김가네', '빽다방', '던킨도너츠', 'EDIYA', '와플대학'
+            '본죽', '멕시칸치킨', '김가네', '빽다방', '던킨도너츠', 'EDIYA', '와플대학', '뚜레주르', '탐앤탐스', '주차장', '식품관', '나리폰', '환전',
+            '구로학습지원센터','미소야'
         ]
 
 change_category_ko = {
@@ -34,7 +35,7 @@ change_category_eng = {
     '베이커리': 'bakery',
     '서점': 'book_store',
     '카페': 'cafe',
-    '쇼핑몰': 'deparment_store',
+    '쇼핑몰': 'department_store',
     '박물관 및 전시회': 'museum',
     '맛집': 'restaurant'
 }
