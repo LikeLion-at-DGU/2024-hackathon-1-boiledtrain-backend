@@ -1,4 +1,5 @@
 import json, requests
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.response import Response
 from django.shortcuts import redirect
@@ -18,9 +19,13 @@ from .models import User
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserInfoSerializer
 
-BASE_URL = 'http://3.36.243.22/'
-KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/login/callback/'
 
+# BASE_URL = 'http://3.36.243.22/'
+BASE_URL = 'http://localhost:8000/'
+KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/login/callback/'
+# 프론트 주소
+client_url = 'http://localhost:5173'
+client_callback_url = client_url + '/kakao/login'
 state = getattr(settings, 'STATE')
 
 class Userinfo(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -37,16 +42,21 @@ class Userinfo(viewsets.GenericViewSet, mixins.ListModelMixin):
 # 이 부분부터 카카오 로그인
 def kakao_login(request):
     rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
+    
     return redirect(
-        f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={KAKAO_CALLBACK_URI}&response_type=code"
+        f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={client_callback_url}&response_type=code"
     )
 
 
+@csrf_exempt
 def kakao_callback(request):
     rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
-    code = request.GET.get("code")
+    # 프론트로부터 받은 코드
+    data = json.loads(request.body)
+    code = data['code']
     print("code : " , code)
-    redirect_uri = KAKAO_CALLBACK_URI
+    # 프론트 주소
+    redirect_uri = client_callback_url
     """
     Access Token Request
     """
@@ -144,4 +154,5 @@ def kakao_callback(request):
 class KakaoLogin(SocialLoginView):
     adapter_class = kakao_view.KakaoOAuth2Adapter
     client_class = OAuth2Client
-    callback_url = KAKAO_CALLBACK_URI
+    # 프론트 url 
+    callback_url = client_callback_url

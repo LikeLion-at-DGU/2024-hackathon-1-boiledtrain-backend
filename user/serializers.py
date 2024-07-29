@@ -36,7 +36,11 @@ class CourseDiarySerializer(serializers.ModelSerializer):
 
 
 class DiarySerializer(serializers.ModelSerializer):
+    serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Diary
+        fields = '__all__'
+        read_only_fields = ['user', 'course']
+
 
   

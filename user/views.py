@@ -32,7 +32,6 @@ class CourseViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         return [IsCourseOwnerOrReadOnly()]
         
-    
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -43,6 +42,14 @@ class CourseViewSet(viewsets.ModelViewSet):
             "message " : "코스가 생성되었습니다.",
             "course" : serializer.data    
         })
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"success" : "삭제 되었습니다."})
+
+    def perform_destroy(self, instance):
+        instance.delete()
 
 #다이어리 디테일, 여기서 수정,삭제
 class DiaryViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
@@ -57,22 +64,31 @@ class DiaryViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.Up
     # def get_queryset(self):
         # return Diary.objects.filter(user=self.request.user) > 확인용으로 모두가 볼 수 있게 해놓음
 
-#코스 별 다이어리 (댓글형식으로)
+
 class CourseDiaryViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
     permission_classes = [AllowAny]
-    serializer_class = DiarySerializer
+
 # permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    def get_serializer_class(self):
+        return DiarySerializer
+        
+    def get_queryset(self):
+        course_id = self.kwargs.get("course_id")
+        return Diary.objects.filter(course_id=course_id)
+    
     def get_object(self):
         course_id = self.kwargs.get("course_id")
         return get_object_or_404(Diary, course_id=course_id)
 
     def create(self, request, *args, **kwargs):
+        user = request.user
         course = get_object_or_404(Course, id=self.kwargs.get("course_id"))
-        if Diary.objects.filter(course=course).exists():
+        if Diary.objects.filter(course=course).first() != None:
             return Response({"detail": "Diary already exists for this course."}, status=400)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(course=course)
+        serializer.save(user=user, course=course)
+        
         return Response(serializer.data, status=201)
 
     def update(self, request, *args, **kwargs):
@@ -87,7 +103,6 @@ class CourseDiaryViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixin
         instance = self.get_object()
         instance.delete()
         return Response(status=204)
-
 
 # M.K 파트
 
@@ -200,7 +215,7 @@ def choose_and_add_place(request):
             result['place']['photo_reference'] = place['results'][0]['photos'][0]['photo_reference']
         # db 에 추가하는 동작이 필요함
 
-        return JsonResponse(result)
+        return JsonResponse({"possible" : "등록할 수 있습니다."})
 
     else:
         return JsonResponse({"error" : "두 지점은 도보로 20분 이상의 거리입니다."})
