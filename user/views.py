@@ -8,7 +8,7 @@ from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
-from .permissions import IsCourseOwnerOrReadOnly
+from .permissions import IsCourseOwnerOrReadOnly, IsPossibleGetCourseOrReadOnly
 
 from .models import Course, Diary
 from .serializers import CourseSerializer, DiarySerializer, CourseDiarySerializer
@@ -21,11 +21,8 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     # create 일 때는 다이어리 정보가 없는 시리얼라이저 출력
     def get_serializer_class(self):
-        if self.action == "post" :
-            return CourseSerializer
-        else :
-            return CourseDiarySerializer
-        
+        return CourseSerializer
+       
     def get_queryset(self):
         return Course.objects.filter(user=self.request.user)
     
@@ -50,6 +47,18 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.delete()
+
+class SubwayCourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    def get_serializer_class(self):
+        return CourseSerializer
+       
+    def get_queryset(self):
+        data = json.loads(self.request.body)
+        subway_station = data['subway_station']
+        return Course.objects.filter(subway_station=subway_station)
+    
+    def get_permissions(self):
+        return [IsPossibleGetCourseOrReadOnly()]
 
 #다이어리 디테일, 여기서 수정,삭제
 class DiaryViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
@@ -215,8 +224,8 @@ def choose_and_add_place(request):
             result['place']['photo_reference'] = place['results'][0]['photos'][0]['photo_reference']
         # db 에 추가하는 동작이 필요함
 
-        return JsonResponse({"possible" : "등록할 수 있습니다."})
+        return JsonResponse({"true" : "등록할 수 있습니다."})
 
     else:
-        return JsonResponse({"error" : "두 지점은 도보로 20분 이상의 거리입니다."})
+        return JsonResponse({"false" : "두 지점은 도보로 20분 이상의 거리입니다."})
 
