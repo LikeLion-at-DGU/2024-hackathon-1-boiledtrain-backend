@@ -4,7 +4,7 @@ import requests, json, random, os
 from django.conf import settings
 from rest_framework import viewsets, mixins
 from datetime import datetime
-import time
+import time, json
 
 
 BASE_URL = 'http://localhost:8000/'
@@ -18,39 +18,25 @@ excluded_keywords = [
             '커스텀커피', 'Chicken Mania', 'BHC', 'BBQ', 'The Coffee Bean', '교촌', '피씨카페', 'Twosome Place', '샵', 
             '메가커피', '메가엠지씨커피', 'Fitness', '멕시카나', 'Tom N Toms', 'Puradak Chicken', 'COFFEE BAY', '페리카나', 
             'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', 
-            '본죽', '멕시칸치킨', '김가네'
+            '본죽', '멕시칸치킨', '김가네', '빽다방', '던킨도너츠', 'EDIYA', '와플대학'
         ]
 
-category_ko = {
-            'aquarium': '아쿠아리움',
-            'art_gallery': '아트갤러리',
+change_category_ko = {
             'bakery': '베이커리',
-            'bar': '술집',
             'book_store': '서점',
             'cafe': '카페',
-            'campground': '캠핑장',
             'department_store': '쇼핑몰',
             'museum': '박물관 및 전시회',
-            'park': '공원',
-            'restaurant': '음식점',
-            'spa': '스파',
-            'zoo': '동물원'
+            'restaurant': '맛집'
         }
 
-category_eng = {
-    '아쿠아리움': 'aquarium',
-    '아트갤러리': 'art_gallery',
+change_category_eng = {
     '베이커리': 'bakery',
-    '술집': 'bar',
     '서점': 'book_store',
     '카페': 'cafe',
-    '캠핑장': 'campground',
     '쇼핑몰': 'deparment_store',
     '박물관 및 전시회': 'museum',
-    '공원': 'park',
-    '음식점': 'restaurant',
-    '스파': 'spa',
-    '동물원': 'zoo'
+    '맛집': 'restaurant'
 }
 
 ###################################################
@@ -125,7 +111,7 @@ def search_places_random(request):
                         selected_places_ids.add(selected_place['place_id'])
 
                         test.append({
-                            'category': category_ko.get(category, category),
+                            'category': change_category_ko.get(category, category),
                             'nearby_place': {
                                 'name': selected_place['name'],
                                 'place_id': selected_place['place_id'],
@@ -151,21 +137,16 @@ def search_places_random(request):
 # 목적 여행
 def search_places_category(request):
     if request.method == "GET":
-        choose_category = '카페'
-        user_category = category_eng.get(choose_category, choose_category)
-#        # 사용자의 category 받기
-#        user_category = request.GET.get('category')
-#
-#        if not user_category:
-#            return JsonResponse({'error': 'Category not provided'})
-#        
-#        # place_category.json에서 카테고리 검사
-#        with open('place_category.json', 'r', encoding='utf-8') as f:
-#            categories = json.load(f)['places']
-#
-#        if user_category not in categories:
-#            return JsonResponse({'error': 'Invalid category'})
 
+        choose_category = json.loads(request.body)
+        if choose_category is None:
+            return JsonResponse({'error': 'Category not specified'})
+        
+        ko_category = choose_category['category']
+
+        # 사용자가 선택한 카테고리를 영어로 변환
+        user_category = change_category_eng.get(ko_category, ko_category)
+        
         result = []
         i = 0 # 인덱스
         used_place_ids = set()  # 이미 선택된 장소 ID를 추적
@@ -239,7 +220,7 @@ def search_places_category(request):
                                         additional_place = random.choice(additional_filtered)
 
                                         additional_places.append({
-                                            'category': category_ko.get(category,category),
+                                            'category': change_category_ko.get(category,category),
                                             'name': additional_place['name'],
                                             'place_id': additional_place['place_id'],
                                             'rating': additional_place['rating'],
@@ -275,7 +256,7 @@ def search_places_category(request):
                         break
                 
         if result:
-            return JsonResponse({'results': {'category': choose_category, 'places': result}})
+            return JsonResponse({'category' : ko_category, 'places': result})
         else:
             return JsonResponse({'error': 'No suitable places found'})
         
