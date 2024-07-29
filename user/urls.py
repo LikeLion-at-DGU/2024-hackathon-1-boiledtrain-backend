@@ -12,7 +12,8 @@ default_router.register("courses", CourseViewSet, basename="courses")
 default_router.register("diary", DiaryViewSet, basename="diary")
 
 urlpatterns = [
-    path('', include(default_router.urls)),
+    path('', include(
+        default_router.urls)),
     path('course/<int:id>/', CourseViewSet.as_view({'get': 'retrieve'}), name='course-detail'),
     path('course/<int:course_id>/diary/', CourseDiaryViewSet.as_view({'get': 'retrieve', 'post': 'create', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='course-diary'),
     path('choose_place/', choose_place, name="choose_place"),
