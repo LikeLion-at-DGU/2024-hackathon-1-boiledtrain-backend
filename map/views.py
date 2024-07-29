@@ -30,12 +30,28 @@ category_ko = {
             'cafe': '카페',
             'campground': '캠핑장',
             'department_store': '쇼핑몰',
-            'museum': '박물관',
+            'museum': '박물관 및 전시회',
             'park': '공원',
             'restaurant': '음식점',
             'spa': '스파',
             'zoo': '동물원'
         }
+
+category_eng = {
+    '아쿠아리움': 'aquarium',
+    '아트갤러리': 'art_gallery',
+    '베이커리': 'bakery',
+    '술집': 'bar',
+    '서점': 'book_store',
+    '카페': 'cafe',
+    '캠핑장': 'campground',
+    '쇼핑몰': 'deparment_store',
+    '박물관 및 전시회': 'museum',
+    '공원': 'park',
+    '음식점': 'restaurant',
+    '스파': 'spa',
+    '동물원': 'zoo'
+}
 
 ###################################################
 # 랜덤 여행
@@ -98,10 +114,10 @@ def search_places_random(request):
                     nearby_response = requests.get(nearby_url).json()
 
                     filtered_places = [place for place in nearby_response['results']
-                                        if place.get('rating', 0) >= 4.0
+                                        if place.get('rating', 0) >= 3.5
                                         and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
                                         and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
-                                        and place.get('user_ratings_total', 0) >= 5
+                                        and place.get('user_ratings_total', 0) >= 3
                                         and place.get('place_id') not in selected_places_ids]
 
                     if filtered_places:
@@ -135,7 +151,8 @@ def search_places_random(request):
 # 목적 여행
 def search_places_category(request):
     if request.method == "GET":
-        user_category = 'art_gallery'
+        choose_category = '카페'
+        user_category = category_eng.get(choose_category, choose_category)
 #        # 사용자의 category 받기
 #        user_category = request.GET.get('category')
 #
@@ -186,7 +203,7 @@ def search_places_category(request):
 
                     # rating이 4.0 이상인 곳만 필터링
                     filtered_places = [place for place in nearby_response['results']
-                                        if place.get('rating', 0) >= 4.0
+                                        if place.get('rating', 0) >= 3.5
                                         and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
                                         and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
                                         and place.get('user_ratings_total', 0) >= 3]
@@ -258,7 +275,7 @@ def search_places_category(request):
                         break
                 
         if result:
-            return JsonResponse({'results': {'category': user_category, 'places': result}})
+            return JsonResponse({'results': {'category': choose_category, 'places': result}})
         else:
             return JsonResponse({'error': 'No suitable places found'})
         

@@ -1,17 +1,10 @@
 {
     "places": [
-        "aquarium",
-        "art_gallery",
         "bakery",
-        "bar",
         "book_store",
         "cafe",
-        "campground",
         "department_store",
         "museum",
-        "park",
-        "restaurant",
-        "spa",
-        "zoo"
+        "restaurant"
     ]
 }
