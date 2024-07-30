@@ -50,6 +50,7 @@ class DiarySerializer(serializers.ModelSerializer):
         if course:
             return CourseSerializer(course).data
         return None
+    image = serializers.ImageField(use_url=True, required=False)
 
 
   

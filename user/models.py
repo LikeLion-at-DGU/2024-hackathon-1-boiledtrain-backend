@@ -5,6 +5,8 @@ from django.conf import settings
 # 커스텀한 유저 모델을 사용한다는 뜻
 User = settings.AUTH_USER_MODEL
 
+def image_upload_path(instance, filename):
+    return f'{instance.pk}/{filename}'
 # 장소 정보를 출력할 코스를 저장하는 데이터베이스
 # placelist 에는 장소의 id 값을 list 형태로 저장한 후 json 필드로 변환하여 저장
 # 장소 id 는 외래키가 아니므로 placelist 필드를 이용하는 매소드 실행 시 필수로 DB 에 장소 id 가 존재하는지 검사
@@ -34,6 +36,7 @@ class Diary(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     mood = models.CharField(max_length=50)
+    image = models.ImageField(upload_to=image_upload_path, blank=True, null=True)
 
     def __str__(self):
         return f'Diary {self.id} by {self.user.email}'
