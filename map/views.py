@@ -5,7 +5,7 @@ from django.conf import settings
 from rest_framework import viewsets, mixins
 from datetime import datetime
 import time, json
-
+from django.views.decorators.csrf import csrf_exempt
 
 BASE_URL = 'http://localhost:8000/'
 
@@ -42,6 +42,7 @@ change_category_eng = {
 
 ###################################################
 # 랜덤 여행
+
 def search_places_random(request):
     if request.method == "GET":
         with open('station_nm_list.json', 'r', encoding='utf-8') as file:
@@ -135,6 +136,7 @@ def search_places_random(request):
     return JsonResponse({'error': 'Invalid request method'})
 ###################################################################
 # 목적 여행
+@csrf_exempt
 def search_places_category(request):
     if request.method == "GET":
 

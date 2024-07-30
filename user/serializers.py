@@ -11,12 +11,10 @@ class CourseSerializer(serializers.ModelSerializer):
             'user',
             'created_at',
             'like_count',
+            'like'
         ]
 
 
-
-
-    
 # class CourseDiarySerializer(serializers.ModelSerializer):
 #     diary = serializers.SerializerMethodField()
 #     serializers.PrimaryKeyRelatedField(read_only=True)
