@@ -62,6 +62,12 @@ class CourseViewSet(viewsets.ModelViewSet):
         courses = CourseSerializer(course, many=True)
         return Response(courses.data)
     
+    @action(methods=['GET'], detail=False, url_path="zzim_course")
+    def zzim_course(self, request):
+        course = self.request.user.likes.all()
+        courses = CourseSerializer(course, many=True)
+        return Response(courses.data)
+    
     @action(methods=['GET'], detail=True, url_path="likes")
     def likes(self, request, pk=None):
         post = self.get_queryset().filter(id=pk).first()
