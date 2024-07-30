@@ -11,7 +11,7 @@ from rest_framework import status
 from .permissions import IsCourseOwnerOrReadOnly, IsPossibleGetCourseOrReadOnly
 
 from .models import Course, Diary
-from .serializers import CourseSerializer, DiarySerializer, CourseDiarySerializer
+from .serializers import CourseSerializer, DiarySerializer
 
 from django.shortcuts import get_object_or_404
 # 거리 계산에 필요한 라이브러리
@@ -61,21 +61,48 @@ class SubwayCourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         return [IsPossibleGetCourseOrReadOnly()]
 
 #다이어리 디테일, 여기서 수정,삭제
-class DiaryViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
-    # queryset = Diary.objects.all()
-    serializer_class = DiarySerializer
+class DiaryViewSet(viewsets.ModelViewSet):
+    def get_serializer_class(self):
+        return DiarySerializer
     # permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
-    permission_classes = [AllowAny]
+    def get_permissions(self):
+        return [IsCourseOwnerOrReadOnly()]
 
     def get_queryset(self):
-        return Diary.objects.all()
-    # def get_queryset(self):
-        # return Diary.objects.filter(user=self.request.user) > 확인용으로 모두가 볼 수 있게 해놓음
+        course_id = self.kwargs.get("course_id")
+        return Diary.objects.filter(user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        course = get_object_or_404(Course, id=self.kwargs.get("course_id"))
+        if Diary.objects.filter(course=course).first() != None:
+            return Response({"detail": "Diary already exists for this course."}, status=400)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user, course=course)
+        return Response(serializer.data, status=201)
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response(status=204)
+    def get_queryset(self):
+
+        return Diary.objects.filter(user=self.request.user)
+
+#코스 별 다이어리 (댓글형식으로)
 class CourseDiaryViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
-    permission_classes = [AllowAny]
+    def get_permissions(self):
+        return [IsCourseOwnerOrReadOnly()]
 
 # permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     def get_serializer_class(self):
@@ -86,17 +113,18 @@ class CourseDiaryViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixin
         return Diary.objects.filter(course_id=course_id)
     
     def get_object(self):
+        queryset = self.get_queryset()
         course_id = self.kwargs.get("course_id")
-        return get_object_or_404(Diary, course_id=course_id)
+        return get_object_or_404(queryset, course_id=course_id)
 
     def create(self, request, *args, **kwargs):
-        user = request.user
+        
         course = get_object_or_404(Course, id=self.kwargs.get("course_id"))
         if Diary.objects.filter(course=course).first() != None:
             return Response({"detail": "Diary already exists for this course."}, status=400)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=user, course=course)
+        serializer.save(user=request.user, course=course)
         
         return Response(serializer.data, status=201)
 

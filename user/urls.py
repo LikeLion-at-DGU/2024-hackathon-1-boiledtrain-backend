@@ -24,6 +24,7 @@ urlpatterns = [
     # 코스 관련 url
     path('', include(course_router.urls)),
     path('', include(subway_course_router.urls)),
+    path('', include(diary_router.urls)),
     # 아래 수정해야함
     path('course/<int:course_id>/', include(course_diary_router.urls)),
     path('choose_and_add_place/', choose_and_add_place, name="choose_and_add_place"),
