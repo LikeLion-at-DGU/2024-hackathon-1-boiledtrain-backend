@@ -4,8 +4,7 @@ import requests, json, random, os
 from django.conf import settings
 from rest_framework import viewsets, mixins
 from datetime import datetime
-from django.views.decorators.csrf import csrf_exempt
-import time
+import time, json
 
 
 BASE_URL = 'http://localhost:8000/'
@@ -18,24 +17,28 @@ excluded_keywords = [
             '프라자', 'plaza', 'Pizza Hut', 'Compose Coffee', 'Mega Coffee', 'Krispy Kreme', '로봇카페', '무인카페', 
             '커스텀커피', 'Chicken Mania', 'BHC', 'BBQ', 'The Coffee Bean', '교촌', '피씨카페', 'Twosome Place', '샵', 
             '메가커피', '메가엠지씨커피', 'Fitness', '멕시카나', 'Tom N Toms', 'Puradak Chicken', 'COFFEE BAY', '페리카나', 
-            'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', '본죽', '멕시칸치킨'
+            'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', 
+            '본죽', '멕시칸치킨', '김가네', '빽다방', '던킨도너츠', 'EDIYA', '와플대학', '뚜레주르', '탐앤탐스', '주차장', '식품관', '나리폰', '환전',
+            '구로학습지원센터','미소야'
         ]
 
-category_ko = {
-            'aquarium': '아쿠아리움',
-            'art_gallery': '아트갤러리',
+change_category_ko = {
             'bakery': '베이커리',
-            'bar': '술집',
             'book_store': '서점',
             'cafe': '카페',
-            'campground': '캠핑장',
             'department_store': '쇼핑몰',
-            'museum': '박물관',
-            'park': '공원',
-            'restaurant': '음식점',
-            'spa': '스파',
-            'zoo': '동물원'
+            'museum': '박물관 및 전시회',
+            'restaurant': '맛집'
         }
+
+change_category_eng = {
+    '베이커리': 'bakery',
+    '서점': 'book_store',
+    '카페': 'cafe',
+    '쇼핑몰': 'department_store',
+    '박물관 및 전시회': 'museum',
+    '맛집': 'restaurant'
+}
 
 ###################################################
 # 랜덤 여행
@@ -89,19 +92,19 @@ def search_places_random(request):
                     category = categories[j]
                     j += 1
 
-                    if category == "bar":
-                        current_hour = datetime.now().hour
-                        if not (15 <= current_hour <= 22):
-                            continue
+                    # if category == "bar":
+                    #     current_hour = datetime.now().hour
+                    #     if not (15 <= current_hour <= 22):
+                    #         continue
 
                     nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&lanbuage=ko&key={rest_api_key}&language=ko"
                     nearby_response = requests.get(nearby_url).json()
 
                     filtered_places = [place for place in nearby_response['results']
-                                        if place.get('rating', 0) >= 4.0
+                                        if place.get('rating', 0) >= 3.5
                                         and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
                                         and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
-                                        and place.get('user_ratings_total', 0) >= 5
+                                        and place.get('user_ratings_total', 0) >= 3
                                         and place.get('place_id') not in selected_places_ids]
 
                     if filtered_places:
@@ -109,9 +112,10 @@ def search_places_random(request):
                         selected_places_ids.add(selected_place['place_id'])
 
                         test.append({
-                            'category': category_ko.get(category, category),
+                            'category': change_category_ko.get(category, category),
                             'nearby_place': {
                                 'name': selected_place['name'],
+                                'place_id': selected_place['place_id'],
                                 'rating': selected_place['rating'],
                                 'user_ratings_total': selected_place['user_ratings_total'],
                                 # 'photo_reference' : selected_place['photos'][0]['photo_reference']
@@ -124,8 +128,7 @@ def search_places_random(request):
                 if success:
                     end_time = time.time()
                     print("시간 : ", end_time - cur_time)
-                    results = {'subway_station': result_subway, 'places': test}
-                    return JsonResponse({'results': results})
+                    return JsonResponse({'subway_station': result_subway, 'places': test})
 
             else:
                 return JsonResponse({'error': 'Place not found'})
@@ -134,20 +137,16 @@ def search_places_random(request):
 # 목적 여행
 def search_places_category(request):
     if request.method == "GET":
-        user_category = 'art_gallery'
-#        # 사용자의 category 받기
-#        user_category = request.GET.get('category')
-#
-#        if not user_category:
-#            return JsonResponse({'error': 'Category not provided'})
-#        
-#        # place_category.json에서 카테고리 검사
-#        with open('place_category.json', 'r', encoding='utf-8') as f:
-#            categories = json.load(f)['places']
-#
-#        if user_category not in categories:
-#            return JsonResponse({'error': 'Invalid category'})
 
+        choose_category = json.loads(request.body)
+        if choose_category is None:
+            return JsonResponse({'error': 'Category not specified'})
+        
+        ko_category = choose_category['category']
+
+        # 사용자가 선택한 카테고리를 영어로 변환
+        user_category = change_category_eng.get(ko_category, ko_category)
+        
         result = []
         i = 0 # 인덱스
         used_place_ids = set()  # 이미 선택된 장소 ID를 추적
@@ -185,7 +184,7 @@ def search_places_category(request):
 
                     # rating이 4.0 이상인 곳만 필터링
                     filtered_places = [place for place in nearby_response['results']
-                                        if place.get('rating', 0) >= 4.0
+                                        if place.get('rating', 0) >= 3.5
                                         and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
                                         and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
                                         and place.get('user_ratings_total', 0) >= 3]
@@ -221,7 +220,7 @@ def search_places_category(request):
                                         additional_place = random.choice(additional_filtered)
 
                                         additional_places.append({
-                                            'category': category_ko.get(category,category),
+                                            'category': change_category_ko.get(category,category),
                                             'name': additional_place['name'],
                                             'place_id': additional_place['place_id'],
                                             'rating': additional_place['rating'],
@@ -232,7 +231,6 @@ def search_places_category(request):
                                             # 총 카운트에서 1 감소한 인덱스에 접근
                                             additional_places[cnt - 1]['photo_reference'] = additional_place['photos'][0]['photo_reference']
                                         used_place_ids.add(additional_place['place_id'])
-
 
                                         
                                         # 장소 카운트를 1 증가
@@ -258,7 +256,7 @@ def search_places_category(request):
                         break
                 
         if result:
-            return JsonResponse({'results': {'category': user_category, 'places': result}})
+            return JsonResponse({'category' : ko_category, 'places': result})
         else:
             return JsonResponse({'error': 'No suitable places found'})
         

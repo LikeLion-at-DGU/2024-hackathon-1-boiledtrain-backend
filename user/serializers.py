@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import Course, Diary
 
 class CourseSerializer(serializers.ModelSerializer):
-    diary = serializers.SerializerMethodField()
     serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Course
@@ -13,6 +12,10 @@ class CourseSerializer(serializers.ModelSerializer):
             'created_at',
             'like_count',
         ]
+
+
+
+
     
 class CourseDiarySerializer(serializers.ModelSerializer):
     diary = serializers.SerializerMethodField()
@@ -36,7 +39,11 @@ class CourseDiarySerializer(serializers.ModelSerializer):
 
 
 class DiarySerializer(serializers.ModelSerializer):
+    serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Diary
+        fields = '__all__'
+        read_only_fields = ['user', 'course']
+
 
   
