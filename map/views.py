@@ -26,7 +26,6 @@ change_category_ko = {
             'bakery': '베이커리',
             'book_store': '서점',
             'cafe': '카페',
-            'department_store': '쇼핑몰',
             'museum': '박물관 및 전시회',
             'restaurant': '맛집'
         }
@@ -35,7 +34,6 @@ change_category_eng = {
     '베이커리': 'bakery',
     '서점': 'book_store',
     '카페': 'cafe',
-    '쇼핑몰': 'department_store',
     '박물관 및 전시회': 'museum',
     '맛집': 'restaurant'
 }
