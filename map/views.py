@@ -138,7 +138,7 @@ def search_places_random(request):
 # 목적 여행
 @csrf_exempt
 def search_places_category(request):
-    if request.method == "GET":
+    if request.method == "POST":
 
         choose_category = json.loads(request.body)
         if choose_category is None:
