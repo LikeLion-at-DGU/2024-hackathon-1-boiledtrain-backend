@@ -19,7 +19,7 @@ excluded_keywords = [
             '메가커피', '메가엠지씨커피', 'Fitness', '멕시카나', 'Tom N Toms', 'Puradak Chicken', 'COFFEE BAY', '페리카나', 
             'paris baguette', 'Pascucci', 'Gongcha', "Paik's", '역전커피', '이디야', '치킨매니아', '신의주찹쌀순대', 'PARIS BAGUETTE', '파리바케', 
             '본죽', '멕시칸치킨', '김가네', '빽다방', '던킨도너츠', 'EDIYA', '와플대학', '뚜레주르', '탐앤탐스', '주차장', '식품관', '나리폰', '환전',
-            '구로학습지원센터','미소야'
+            '구로학습지원센터','미소야', '피자마루', '포트 캔 커피', '굽네치킨','새마을식당'
         ]
 
 change_category_ko = {
@@ -158,8 +158,7 @@ def search_places_category(request):
         for _ in range(3):  # 3번 반복
             while True:  # 조건에 맞는 장소가 나올 때까지 반복
                 cur_time = time.time()
-                # 지하철 역을 새로 찾을 때마다 장소 카운트 초기화
-                cnt = 0
+                cnt = 0  # 장소 카운트 초기화
                 if station_nm_list[i] == "서울역":
                     subway = station_nm_list[i]
                 else:
@@ -168,12 +167,10 @@ def search_places_category(request):
                 result_subway = station_nm_list[i]
                 i = i + 1
 
-                # 지하철역의 이름을 추출해서 장소 검색
                 rest_api_key = settings.MAP_KEY
                 location_url = f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input={subway}&inputtype=textquery&key={rest_api_key}&language=ko"
                 location_response = requests.get(location_url).json()
 
-                # 검색된 정보에서 위도, 경도를 추출하여 근처 장소 검색
                 if location_response['candidates']:
                     location = location_response['candidates'][0]['geometry']['location']
                     lat = location['lat']
@@ -182,82 +179,83 @@ def search_places_category(request):
                     nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={user_category}&key={rest_api_key}&language=ko"
                     nearby_response = requests.get(nearby_url).json()
 
-                    # rating이 4.0 이상인 곳만 필터링
                     filtered_places = [place for place in nearby_response['results']
-                                        if place.get('rating', 0) >= 3.5
-                                        and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
-                                        and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
-                                        and place.get('user_ratings_total', 0) >= 3]
+                                    if place.get('rating', 0) >= 3.5
+                                    and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
+                                    and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
+                                    and place.get('user_ratings_total', 0) >= 3
+                                    and place['place_id'] not in used_place_ids]
 
-                    # 중복된 장소 ID가 아닌 것만 선택
-                    filtered_places = [place for place in filtered_places if place['place_id'] not in used_place_ids]
-                    
                     if filtered_places:
-                        # 필터링된 장소에서 랜덤으로 하나 선택
                         selected_place = random.choice(filtered_places)
                         used_place_ids.add(selected_place['place_id'])
-                        # 장소를 찾았으면 카운트 1 증가
-                        cnt = cnt + 1
-                        # 추가 카테고리의 장소 검색
+                        cnt += 1
+
                         with open('place_category.json', 'r', encoding='utf-8') as f:
                             categories = json.load(f)['places']
-                        additional_places = []
-                        selected_categories = set()  # 선택된 카테고리를 추적
 
-                        for category in categories:
-                            if category != user_category and category not in selected_categories:
-                                additional_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&key={rest_api_key}&language=ko"
-                                additional_response = requests.get(additional_url).json()
-                                if additional_response['results']:
-                                    additional_filtered = [place for place in additional_response['results']
+                        additional_places = []
+                        selected_categories = set()
+
+                        while len(additional_places) < 2:
+                            for category in categories:
+                                if category != user_category and category not in selected_categories:
+                                    additional_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&language=ko&type={category}&key={rest_api_key}&language=ko"
+                                    additional_response = requests.get(additional_url).json()
+                                    if additional_response['results']:
+                                        additional_filtered = [place for place in additional_response['results']
                                                             if place.get('rating', 0) >= 3.5
                                                             and not place.get('name', '').endswith(('점', '역', 'station)', '점)'))
                                                             and not any(keyword in place.get('name', '') for keyword in excluded_keywords)
                                                             and place.get('user_ratings_total', 0) >= 3
                                                             and place['place_id'] not in used_place_ids]
-                                    if additional_filtered:
-                                        selected_categories.add(category)
-                                        additional_place = random.choice(additional_filtered)
+                                        if additional_filtered:
+                                            selected_categories.add(category)
+                                            additional_place = random.choice(additional_filtered)
+                                            additional_places.append({
+                                                'category': change_category_ko.get(category, category),
+                                                'name': additional_place['name'],
+                                                'place_id': additional_place['place_id'],
+                                                'rating': additional_place['rating'],
+                                                'user_ratings_total': additional_place['user_ratings_total']
+                                            })
+                                            if 'photos' in additional_place:
+                                                additional_places[-1]['photo_reference'] = additional_place['photos'][0]['photo_reference']
+                                            used_place_ids.add(additional_place['place_id'])
+                                            
+                                            # 디버깅 로그 추가
+                                            print(f"추가 장소 선택됨: {additional_place['name']} (카테고리: {category})")
 
-                                        additional_places.append({
-                                            'category': change_category_ko.get(category,category),
-                                            'name': additional_place['name'],
-                                            'place_id': additional_place['place_id'],
-                                            'rating': additional_place['rating'],
-                                            'user_ratings_total': additional_place['user_ratings_total']
-                                            # 'photo_reference' : additional_place['photos'][0]['photo_reference']
-                                        })
-                                        if 'photos' in additional_place:
-                                            # 총 카운트에서 1 감소한 인덱스에 접근
-                                            additional_places[cnt - 1]['photo_reference'] = additional_place['photos'][0]['photo_reference']
-                                        used_place_ids.add(additional_place['place_id'])
+                                            cnt += 1
+                                            if cnt >= 3:
+                                                break
+                            if len(additional_places) < 2:
+                                additional_places = []
+                                break
+                            # 디버깅 로그 추가
+                            print(f"총 추가 장소 개수: {len(additional_places)}")
+                            
+                        if len(additional_places) == 2:
+                            result.append({
+                                'subway_station': result_subway,
+                                'nearby_place': {
+                                    'name': selected_place['name'],
+                                    'place_id': selected_place['place_id'],
+                                    'rating': selected_place['rating'],
+                                    'user_ratings_total': selected_place['user_ratings_total'],
+                                },
+                                'additional_places': additional_places
+                            })
+                            if 'photos' in selected_place:
+                                result[-1]['nearby_place']['photo_reference'] = selected_place['photos'][0]['photo_reference']
+                            end_time = time.time()
+                            print("시간 : ", end_time - cur_time)
+                            break
 
-                                        
-                                        # 장소 카운트를 1 증가
-                                        cnt = cnt + 1
-                                        # 장소 카운트가 3개가 넘어가면 break
-                                        if cnt >= 3: 
-                                            break
-
-                        result.append({
-                            'subway_station': result_subway,
-                            'nearby_place': {
-                                'name': selected_place['name'],
-                                'place_id': selected_place['place_id'],
-                                'rating': selected_place['rating'],
-                                'user_ratings_total': selected_place['user_ratings_total'],
-                            },
-                            'additional_places': additional_places
-                        })
-                        if 'photos' in selected_place:
-                                result[len(result) - 1]['nearby_place']['photo_reference'] = selected_place['photos'][0]['photo_reference']
-                        end_time = time.time()
-                        print("시간 : ", end_time - cur_time)
-                        break
-                
         if result:
-            return JsonResponse({'category' : ko_category, 'places': result})
+            return JsonResponse({'category': ko_category, 'places': result})
         else:
             return JsonResponse({'error': 'No suitable places found'})
+
         
     return JsonResponse({'results': {'error': 'Invalid request method'}})
