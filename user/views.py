@@ -243,7 +243,7 @@ def search_photo(request):
     else:
         return HttpResponse('Failed to retrieve the photo', status=photo_response.status_code)
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def choose_and_add_place(request):
     # 사용자가 프론트 인터페이스에 입력한 장소 이름을 받아와서 구글 api를 통해 검색
