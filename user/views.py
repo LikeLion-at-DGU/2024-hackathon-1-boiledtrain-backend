@@ -252,11 +252,12 @@ def choose_and_add_place(request):
     #정확한 상호명을 받아와야 함
     # json 파일을 받아옴
     data = json.loads(request.body)
+    print(data)
     subway_input = data['subway_station']
-    place_input = data['place']
+    place_id = data['place']
 
     subway_station = search_station(subway_input) # Json 파일
-    place = search_place(place_input) # Json 파일
+    place = search_place(place_id) # Json 파일
     
     lng1 = subway_station['results'][0]['geometry']['location']['lng']
     lat1 = subway_station['results'][0]['geometry']['location']['lat']
