@@ -216,17 +216,25 @@ def is_good(lon1, lat1, lon2, lat2):
 
 def search_station(subway_station):
     rest_api_key = getattr(settings, 'MAP_KEY')
-    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={subway_station}&key={rest_api_key}&language=kr"
+    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={subway_station}&key={rest_api_key}&language=ko"
     location_response = requests.get(location_url).json()
     
     return location_response
 
-def search_place(place):
-    rest_api_key = getattr(settings, 'MAP_KEY')
-    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={place}&key={rest_api_key}&language=ko"
-    location_response = requests.get(location_url).json()
+#def search_place(place):
+#    rest_api_key = getattr(settings, 'MAP_KEY')
+#    location_url = f"https://maps.googleapis.com/maps/api/place/textsearch/json?query={place}&key={rest_api_key}&language=ko"
+#    location_response = requests.get(location_url).json()
+#
+#    return location_response
 
-    return location_response
+
+def search_place_by_id(place_id):
+    rest_api_key = getattr(settings, 'MAP_KEY')
+    place_url = f"https://maps.googleapis.com/maps/api/place/details/json?place_id={place_id}&key={rest_api_key}&language=ko"
+    place_response = requests.get(place_url).json()
+
+    return place_response
 
 # 사진 출력 메소드, 미완성
 def search_photo(request):
@@ -257,39 +265,60 @@ def choose_and_add_place(request):
     place_id = data['place']
 
     subway_station = search_station(subway_input) # Json 파일
-    place = search_place(place_id) # Json 파일
+    place = search_place_by_id(place_id) # Json 파일
     
+    print(place)
     lng1 = subway_station['results'][0]['geometry']['location']['lng']
     lat1 = subway_station['results'][0]['geometry']['location']['lat']
-    lng2 = place['results'][0]['geometry']['location']['lng']
-    lat2 = place['results'][0]['geometry']['location']['lat']
+    lng2 = place['result']['geometry']['location']['lng']
+    lat2 = place['result']['geometry']['location']['lat']
     
+    def is_good(lng1, lat1, lng2, lat2):
+        # 거리 계산 로직을 구현해야 합니다.
+        # 예를 들어, Haversine 공식을 사용하여 거리 계산
+        from math import radians, cos, sin, sqrt, atan2
+
+        R = 6371.0  # 지구의 반경 (킬로미터 단위)
+
+        lat1_rad = radians(lat1)
+        lng1_rad = radians(lng1)
+        lat2_rad = radians(lat2)
+        lng2_rad = radians(lng2)
+
+        dlat = lat2_rad - lat1_rad
+        dlng = lng2_rad - lng1_rad
+
+        a = sin(dlat / 2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlng / 2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        distance = R * c
+
+        # 20분 거리 이내인지 판단 (1분에 80m 가정, 20분 = 1.6km)
+        return distance <= 1.6
 
     if is_good(lng1 , lat1 , lng2 , lat2): # 20분 이내 거리인지 확인
         result = {
             "subway_station" : subway_station['results'][0]['name'],
 
             "place" : {
-                "name" : place['results'][0]['name']
+                "name" : place['result']['name']
             }
         }
-        if 'formatted_address' in place['results'][0]:
-            result["place"]['address'] = place['results'][0]['formatted_address']
-        if 'opening_hours' in place['results'][0]:
-            result["place"]['opening_hours'] = place['results'][0]['opening_hours']
-        if 'rating' in place['results'][0]:
-            result["place"]['rating'] = place['results'][0]['rating']
-        if 'user_ratings_total' in place['results'][0]:
-            result["place"]['user_ratings_total'] = place['results'][0]['user_ratings_total']
-        if 'types' in place['results'][0]:
-            result["place"]['types'] = place['results'][0]['types']
-        if  'photo' in place['results'][0] and 'photo_reference' in place['results'][0]['photos'][0]:
-            result['place']['photo_reference'] = place['results'][0]['photos'][0]['photo_reference']
+        if 'formatted_address' in place['result']:
+            result["place"]['address'] = place['result']['formatted_address']
+        if 'opening_hours' in place['result']:
+            result["place"]['opening_hours'] = place['result']['opening_hours']
+        if 'rating' in place['result']:
+            result["place"]['rating'] = place['result']['rating']
+        if 'user_ratings_total' in place['result']:
+            result["place"]['user_ratings_total'] = place['result']['user_ratings_total']
+        if 'types' in place['result']:
+            result["place"]['types'] = place['result']['types']
+        if 'photos' in place['result'] and 'photo_reference' in place['result']['photos'][0]:
+            result['place']['photo_reference'] = place['result']['photos'][0]['photo_reference']
         # db 에 추가하는 동작이 필요함
 
         return JsonResponse({"true" : "등록할 수 있습니다."})
 
     else:
-        
         return JsonResponse({"false" : "두 지점은 도보로 20분 이상의 거리입니다."})
-
