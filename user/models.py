@@ -18,6 +18,7 @@ class Course(models.Model):
     subway_station = models.CharField(max_length=50)
     placelist = models.JSONField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="courses")
+    like = models.ManyToManyField(User, related_name="likes", blank=True)
     like_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     is_share = models.BooleanField(default=False)

@@ -5,7 +5,7 @@ from django.conf import settings
 from rest_framework import viewsets, mixins
 from datetime import datetime
 import time, json
-
+from django.views.decorators.csrf import csrf_exempt
 
 BASE_URL = 'http://localhost:8000/'
 
@@ -26,7 +26,6 @@ change_category_ko = {
             'bakery': '베이커리',
             'book_store': '서점',
             'cafe': '카페',
-            'department_store': '쇼핑몰',
             'museum': '박물관 및 전시회',
             'restaurant': '맛집'
         }
@@ -35,13 +34,13 @@ change_category_eng = {
     '베이커리': 'bakery',
     '서점': 'book_store',
     '카페': 'cafe',
-    '쇼핑몰': 'department_store',
     '박물관 및 전시회': 'museum',
     '맛집': 'restaurant'
 }
 
 ###################################################
 # 랜덤 여행
+
 def search_places_random(request):
     if request.method == "GET":
         with open('station_nm_list.json', 'r', encoding='utf-8') as file:
@@ -135,8 +134,9 @@ def search_places_random(request):
     return JsonResponse({'error': 'Invalid request method'})
 ###################################################################
 # 목적 여행
+@csrf_exempt
 def search_places_category(request):
-    if request.method == "GET":
+    if request.method == "POST":
 
         choose_category = json.loads(request.body)
         if choose_category is None:

@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from .permissions import IsCourseOwnerOrReadOnly, IsPossibleGetCourseOrReadOnly
+from rest_framework.decorators import action
 
 from .models import Course, Diary
 from .serializers import CourseSerializer, DiarySerializer
@@ -48,6 +49,39 @@ class CourseViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         instance.delete()
 
+
+    @action(methods=['GET'], detail=False, url_path="like_order")
+    def like_order(self, request):
+        course = self.get_queryset().order_by('-like_count')
+        courses = CourseSerializer(course, many=True)
+        return Response(courses.data)
+    
+    @action(methods=['GET'], detail=False, url_path="created_order")
+    def created_order(self, request):
+        course = self.get_queryset().order_by('created_at')
+        courses = CourseSerializer(course, many=True)
+        return Response(courses.data)
+    
+    @action(methods=['GET'], detail=False, url_path="zzim_course")
+    def zzim_course(self, request):
+        course = self.request.user.likes.all()
+        courses = CourseSerializer(course, many=True)
+        return Response(courses.data)
+    
+    @action(methods=['GET'], detail=True, url_path="likes")
+    def likes(self, request, pk=None):
+        post = self.get_queryset().filter(id=pk).first()
+        if request.user in post.like.all():
+            post.like.remove(request.user)
+            post.like_count -= 1
+            post.save()
+        else:
+            post.like.add(request.user)
+            post.like_count += 1
+            post.save()
+        course_serializer = CourseSerializer(post)
+        return Response(course_serializer.data)
+
 class SubwayCourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     def get_serializer_class(self):
         return CourseSerializer
@@ -60,6 +94,7 @@ class SubwayCourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     def get_permissions(self):
         return [IsPossibleGetCourseOrReadOnly()]
 
+    
 #다이어리 디테일, 여기서 수정,삭제
 class DiaryViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
