@@ -17,7 +17,6 @@ from .serializers import CourseSerializer, DiarySerializer
 from django.shortcuts import get_object_or_404
 # 거리 계산에 필요한 라이브러리
 from math import radians, sin, cos, sqrt, atan2
-logger = logging.getLogger('django')
 class CourseViewSet(viewsets.ModelViewSet):
 
     # create 일 때는 다이어리 정보가 없는 시리얼라이저 출력
