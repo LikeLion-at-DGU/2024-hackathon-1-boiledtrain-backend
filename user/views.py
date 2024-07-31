@@ -1,4 +1,4 @@
-import json, logging
+import json
 from django.http import HttpResponse, JsonResponse
 import requests
 from django.conf import settings
@@ -247,7 +247,6 @@ def search_photo(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def choose_and_add_place(request):
-    logger.debug(f'Received request data: {request.body}')
     # 사용자가 프론트 인터페이스에 입력한 장소 이름을 받아와서 구글 api를 통해 검색
 
     #프론트에서 받아올 부분
@@ -287,10 +286,10 @@ def choose_and_add_place(request):
         if  'photo' in place['results'][0] and 'photo_reference' in place['results'][0]['photos'][0]:
             result['place']['photo_reference'] = place['results'][0]['photos'][0]['photo_reference']
         # db 에 추가하는 동작이 필요함
-        logger.debug(f'Response data: {result}')
+
         return JsonResponse({"true" : "등록할 수 있습니다."})
 
     else:
-        logger.debug('Two locations are more than 20 minutes apart')
+        
         return JsonResponse({"false" : "두 지점은 도보로 20분 이상의 거리입니다."})
 
