@@ -20,9 +20,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('dj_rest_auth.urls')),
-    path('accounts/', include('accounts.urls')),    
-    path('subway/', include('subway.urls')),
-    path('map/', include('map.urls')),
-    path('user/', include('user.urls')),
+    path('api/accounts/', include('dj_rest_auth.urls')),
+    path('api/accounts/', include('accounts.urls')),    
+    path('api/subway/', include('subway.urls')),
+    path('api/map/', include('map.urls')),
+    path('api/user/', include('user.urls')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
