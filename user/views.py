@@ -24,7 +24,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         return CourseSerializer
        
     def get_queryset(self):
-        return Course.objects.filter(user=self.request.user)
+        return Course.objects.all()
     
     def get_permissions(self):
         return [IsCourseOwnerOrReadOnly()]
