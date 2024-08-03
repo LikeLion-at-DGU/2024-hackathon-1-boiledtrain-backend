@@ -1,5 +1,16 @@
+import json
 from rest_framework import serializers
+from django.http import JsonResponse
 from .models import Course, Diary
+from django.conf import settings
+import requests
+
+# from .views import search_place_by_id
+def search_place_by_id(place_id):
+    rest_api_key = getattr(settings, 'MAP_KEY')
+    place_url = f"https://maps.googleapis.com/maps/api/place/details/json?place_id={place_id}&key={rest_api_key}&language=ko"
+    place_response = requests.get(place_url).json()
+    return place_response
 
 class CourseSerializer(serializers.ModelSerializer):
     serializers.PrimaryKeyRelatedField(read_only=True)
@@ -14,7 +25,45 @@ class CourseSerializer(serializers.ModelSerializer):
             'like'
         ]
 
+class CourseDetailSerializer(serializers.ModelSerializer):
+    serializers.PrimaryKeyRelatedField(read_only=True)
+    placelist = serializers.SerializerMethodField(read_only=True)
 
+    def get_placelist(self, instance):
+        place_id_list = instance.placelist
+        placelist = []
+        for p in place_id_list:
+            place = search_place_by_id(p)
+            result = {
+                "name" : place['result']['name']
+            }
+            if 'formatted_address' in place['result']:
+                result['address'] = place['result']['formatted_address']
+            if 'opening_hours' in place['result']:
+                result['opening_hours'] = place['result']['opening_hours']
+            if 'rating' in place['result']:
+                result['rating'] = place['result']['rating']
+            if 'user_ratings_total' in place['result']:
+                result['user_ratings_total'] = place['result']['user_ratings_total']
+            if 'types' in place['result']:
+                result['types'] = place['result']['types']
+            if 'photos' in place['result'] and 'photo_reference' in place['result']['photos'][0]:
+                result['photo_reference'] = place['result']['photos'][0]['photo_reference']
+
+            placelist.append(result)
+
+        return placelist
+    
+    class Meta:
+        model = Course
+        fields = '__all__'
+        read_only_fields = [
+            'id',
+            'user',
+            'created_at',
+            'like_count',
+            'like'
+        ]
 # class CourseDiarySerializer(serializers.ModelSerializer):
 #     diary = serializers.SerializerMethodField()
 #     serializers.PrimaryKeyRelatedField(read_only=True)

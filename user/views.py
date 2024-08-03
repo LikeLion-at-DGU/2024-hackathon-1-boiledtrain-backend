@@ -27,7 +27,7 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
     
     def get_permissions(self):
         return [IsPossibleGetCourseOrReadOnly()]
-        
+    
     @action(methods=['GET'], detail=False, url_path="like_order")
     def like_order(self, request):
         course = self.get_queryset().order_by('-like_count')
@@ -304,28 +304,6 @@ def choose_and_add_place(request):
         return distance <= 1.6
 
     if is_good(lng1 , lat1 , lng2 , lat2): # 20분 이내 거리인지 확인
-        result = {
-            "subway_station" : subway_station['results'][0]['name'],
-
-            "place" : {
-                "name" : place['result']['name']
-            }
-        }
-        if 'formatted_address' in place['result']:
-            result["place"]['address'] = place['result']['formatted_address']
-        if 'opening_hours' in place['result']:
-            result["place"]['opening_hours'] = place['result']['opening_hours']
-        if 'rating' in place['result']:
-            result["place"]['rating'] = place['result']['rating']
-        if 'user_ratings_total' in place['result']:
-            result["place"]['user_ratings_total'] = place['result']['user_ratings_total']
-        if 'types' in place['result']:
-            result["place"]['types'] = place['result']['types']
-        if 'photos' in place['result'] and 'photo_reference' in place['result']['photos'][0]:
-            result['place']['photo_reference'] = place['result']['photos'][0]['photo_reference']
-        # db 에 추가하는 동작이 필요함
-
         return JsonResponse({"true" : "등록할 수 있습니다."})
-
     else:
         return JsonResponse({"false" : "두 지점은 도보로 20분 이상의 거리입니다."})
