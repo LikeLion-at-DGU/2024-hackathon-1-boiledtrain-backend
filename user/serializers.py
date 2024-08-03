@@ -39,8 +39,6 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             }
             if 'formatted_address' in place['result']:
                 result['address'] = place['result']['formatted_address']
-            if 'opening_hours' in place['result']:
-                result['opening_hours'] = place['result']['opening_hours']
             if 'rating' in place['result']:
                 result['rating'] = place['result']['rating']
             if 'user_ratings_total' in place['result']:
