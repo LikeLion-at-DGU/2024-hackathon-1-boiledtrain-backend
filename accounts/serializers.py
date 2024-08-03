@@ -14,4 +14,4 @@ class CustomTokenRefreshSerializer(serializers.Serializer):
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['nickname' , 'email', 'last_login']
+        fields = ['email', 'name', 'nickname']
