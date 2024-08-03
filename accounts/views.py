@@ -163,7 +163,7 @@ def local_kakao_login(request):
     rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
     
     return redirect(
-        f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={LOCAL_KAKAO_CALLBACK_URI}&response_type=code"
+        f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={LOCAL_KAKAO_CALLBACK_URI}&response_type=code&prompt=login"
     )
 
 def local_kakao_callback(request):
