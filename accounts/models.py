@@ -42,6 +42,7 @@ class User(AbstractUser):
     # 닉네임 필드 추가
     name = models.CharField(max_length=30)
     nickname = models.CharField(max_length=30)
+    profile_image = models.ImageField(upload_to='user', default='user/default_profile.png')
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
