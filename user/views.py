@@ -12,7 +12,7 @@ from .permissions import IsCourseOwnerOrReadOnly, IsPossibleGetCourseOrReadOnly
 from rest_framework.decorators import action
 
 from .models import Course, Diary
-from .serializers import CourseSerializer, DiarySerializer
+from .serializers import CourseSerializer, DiarySerializer, CourseDetailSerializer
 
 from django.shortcuts import get_object_or_404
 # 거리 계산에 필요한 라이브러리
@@ -20,7 +20,10 @@ from math import radians, sin, cos, sqrt, atan2
 class CourseViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
 
     def get_serializer_class(self):
-        return CourseSerializer
+        if self.action == 'retrieve':
+            return CourseDetailSerializer
+        else:
+            return CourseSerializer
        
     def get_queryset(self):
         return Course.objects.all()
@@ -74,8 +77,10 @@ class SubwayCourseViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
 
 class MyCourseViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
-        return CourseSerializer
-    
+        if self.action == 'retrieve':
+            return CourseDetailSerializer
+        else:
+            return CourseSerializer
     def get_queryset(self):
         return Course.objects.filter(user=self.request.user)
 
