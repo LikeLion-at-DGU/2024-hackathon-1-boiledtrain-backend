@@ -19,6 +19,8 @@ from .models import User
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserInfoSerializer
 
+
+BASE_URL = 'http://3.36.243.22/api/'
 # KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/login/callback/'
 # 프론트 주소
 client_url = 'http://13.125.69.196:5173/'
@@ -155,7 +157,7 @@ class KakaoLogin(SocialLoginView):
 
 
 # 로컬 테스트용 메소드
-LOCAL_BASE_URL = 'http://localhost:8000/'
+LOCAL_BASE_URL = 'http://localhost:8000/api/'
 LOCAL_KAKAO_CALLBACK_URI = LOCAL_BASE_URL + 'accounts/localkakao/login/callback/'
 def local_kakao_login(request):
     rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
