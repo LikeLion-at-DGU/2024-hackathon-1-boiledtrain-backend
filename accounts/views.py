@@ -89,6 +89,7 @@ def kakao_callback(request):
     """
     # 필요한 정보를 가져옴
     email = kakao_account.get('email')
+    name = properties.get('nickname')
     nickname = properties.get('nickname')
 
     """
@@ -117,6 +118,7 @@ def kakao_callback(request):
         
         userinfo = {
             "email" : user.email,
+            'name' : user.name,
             "nickname" : user.nickname
         }
         accept_json.pop('user', None)
@@ -136,12 +138,14 @@ def kakao_callback(request):
             return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
         
         user = User.objects.get(email=email)
+        user.name = name
         user.nickname = nickname
         user.save()
         # Access Token, Refresh token 
         accept_json = accept.json()
         userinfo = {
             "email" : user.email,
+            'name' : user.name,
             "nickname" : user.nickname
         }
         accept_json.pop('user', None)
@@ -208,6 +212,7 @@ def local_kakao_callback(request):
     """
     # 필요한 정보를 가져옴
     email = kakao_account.get('email')
+    name = properties.get('nickname')
     nickname = properties.get('nickname')
 
     """
@@ -236,6 +241,7 @@ def local_kakao_callback(request):
         
         userinfo = {
             "email" : user.email,
+            'name' : user.name,
             "nickname" : user.nickname
         }
         accept_json.pop('user', None)
@@ -255,12 +261,14 @@ def local_kakao_callback(request):
             return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
         
         user = User.objects.get(email=email)
+        user.name = name
         user.nickname = nickname
         user.save()
         # Access Token, Refresh token 
         accept_json = accept.json()
         userinfo = {
             "email" : user.email,
+            'name' : user.name,
             "nickname" : user.nickname
         }
         accept_json.pop('user', None)
