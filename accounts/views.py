@@ -19,8 +19,6 @@ from .models import User
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserInfoSerializer
 
-
-BASE_URL = 'http://3.36.243.22/api/'
 # KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/login/callback/'
 # 프론트 주소
 client_url = 'http://13.125.69.196:5173/'
