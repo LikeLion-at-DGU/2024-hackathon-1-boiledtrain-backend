@@ -21,13 +21,13 @@ from .serializers import UserInfoSerializer
 
 
 BASE_URL = 'http://3.36.243.22/api/'
-# KAKAO_CALLBACK_URI = BASE_URL + 'accounts/kakao/login/callback/'
+
 # 프론트 주소
 client_url = 'http://13.125.69.196:5173/'
 client_callback_url = client_url + '/kakao/login'
 state = getattr(settings, 'STATE')
 
-class Userinfo(viewsets.GenericViewSet, mixins.ListModelMixin):
+class Userinfo(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
     permission_classes = [IsAuthenticated]
      
     def get_queryset(self):
@@ -36,8 +36,17 @@ class Userinfo(viewsets.GenericViewSet, mixins.ListModelMixin):
     
     def get_serializer_class(self):
         return UserInfoSerializer
-    
 
+    def retrieve(self, request, *args, **kwargs):
+        # 현재 로그인된 사용자의 정보를 반환
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def get_object(self):
+        # 현재 로그인된 사용자를 반환
+        return self.request.user
+    
 def kakao_login(request):
     rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
     
