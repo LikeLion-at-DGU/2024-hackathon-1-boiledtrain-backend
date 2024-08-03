@@ -23,7 +23,7 @@ from .serializers import UserInfoSerializer
 BASE_URL = 'http://3.36.243.22/api/'
 
 # 프론트 주소
-client_url = 'http://localhost:5173'
+client_url = 'http://13.125.69.196:5173'
 client_callback_url = client_url + '/kakao/login'
 state = getattr(settings, 'STATE')
 
