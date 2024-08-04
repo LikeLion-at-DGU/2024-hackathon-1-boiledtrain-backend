@@ -3,6 +3,9 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 
+def image_upload_path(instance, filename):
+    return f'user/{instance.id}/{filename}'
+
 class UserManager(BaseUserManager):
     """
     Custom user model manager where email is the unique identifiers
@@ -42,7 +45,7 @@ class User(AbstractUser):
     # 닉네임 필드 추가
     name = models.CharField(max_length=30)
     nickname = models.CharField(max_length=30)
-    profile_image = models.ImageField(upload_to='user', default='user/default_profile.png')
+    profile_image = models.ImageField(upload_to=image_upload_path, null=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 

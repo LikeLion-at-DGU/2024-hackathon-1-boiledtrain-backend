@@ -12,6 +12,9 @@ class CustomTokenRefreshSerializer(serializers.Serializer):
         return data
     
 class UserInfoSerializer(serializers.ModelSerializer):
+    profile_image = serializers.ImageField(use_url=True, required=False)
     class Meta:
         model = User
         fields = ['email', 'name', 'nickname', 'profile_image']
+        read_only_fields = ['email']
+    
