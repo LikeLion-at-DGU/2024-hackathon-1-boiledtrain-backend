@@ -204,7 +204,7 @@ def front_kakao_callback(request):
     code = data['code']
     print("code : " , code)
     # 프론트 주소
-    redirect_uri = client_callback_url
+    redirect_uri = local_client_callback_url
     """
     Access Token Request
     """
