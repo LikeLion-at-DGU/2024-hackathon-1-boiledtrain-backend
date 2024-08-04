@@ -101,7 +101,7 @@ class MyCourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
        return CourseSerializer
     
     def get_permissions(self):
-        return [IsPossibleGetCourseOrReadOnly()]
+        return [IsCourseOwnerOrReadOnly()]
     
     def get_queryset(self):
         return Course.objects.filter(user=self.request.user)
