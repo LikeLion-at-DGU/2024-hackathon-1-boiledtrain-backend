@@ -17,7 +17,7 @@ from .serializers import CourseSerializer, DiarySerializer, CourseDetailSerializ
 from django.shortcuts import get_object_or_404
 # 거리 계산에 필요한 라이브러리
 from math import radians, sin, cos, sqrt, atan2
-class CourseViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
+class CourseViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -30,6 +30,25 @@ class CourseViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.L
     
     def get_permissions(self):
         return [IsPossibleGetCourseOrReadOnly()]
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # jwt 토큰으로부터 유저 정보를 전달 받아서 저장
+        serializer.save(user=request.user)
+        return Response({
+            "message " : "코스가 생성되었습니다.",
+            "course" : serializer.data    
+        })
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"success" : "삭제 되었습니다."})
+
+    def perform_destroy(self, instance):
+        instance.delete()
     
     @action(methods=['GET'], detail=False, url_path="like_order")
     def like_order(self, request):
@@ -75,36 +94,16 @@ class SubwayCourseViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mi
     def get_permissions(self):
         return [IsPossibleGetCourseOrReadOnly()]
 
-class MyCourseViewSet(viewsets.ModelViewSet):
+class MyCourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return CourseDetailSerializer
-        else:
-            return CourseSerializer
+       return CourseSerializer
+    
     def get_queryset(self):
         return Course.objects.filter(user=self.request.user)
 
     def get_permissions(self):
         return [IsCourseOwnerOrReadOnly()]
     
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # jwt 토큰으로부터 유저 정보를 전달 받아서 저장
-        serializer.save(user=request.user)
-        return Response({
-            "message " : "코스가 생성되었습니다.",
-            "course" : serializer.data    
-        })
-    
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response({"success" : "삭제 되었습니다."})
-
-    def perform_destroy(self, instance):
-        instance.delete()
     
 #다이어리 디테일, 여기서 수정,삭제
 class DiaryViewSet(viewsets.ModelViewSet):
