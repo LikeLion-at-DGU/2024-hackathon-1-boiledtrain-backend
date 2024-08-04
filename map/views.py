@@ -1,9 +1,7 @@
-from django.shortcuts import render
 from django.http import JsonResponse
-import requests, json, random, os
+import requests, json, random
 from django.conf import settings
-from rest_framework import viewsets, mixins
-from datetime import datetime
+
 import time, json
 from django.views.decorators.csrf import csrf_exempt
 
