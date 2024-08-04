@@ -46,8 +46,18 @@ class Userinfo(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.Update
         return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
-        
-        return super().update(request, *args, **kwargs)
+        instance = self.get_object()
+        old_image_path = instance.profile_image.path if instance.profile_image else None
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if old_image_path and 'profile_image' in request.FILES:
+            if os.path.exists(old_image_path):
+                os.remove(old_image_path)
+
+        return Response(serializer.data)
     def get_object(self):
         # 현재 로그인된 사용자를 반환
         return self.request.user
