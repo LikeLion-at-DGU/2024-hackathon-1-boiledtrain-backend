@@ -24,7 +24,9 @@ BASE_URL = 'http://3.36.243.22/api/'
 
 # 프론트 주소
 client_url = 'http://13.125.69.196:5173'
-client_callback_url = client_url + '/kakao/login'
+local_front_callback_url = 'http://localhost:5173'
+# client_callback_url = client_url + '/kakao/login'
+client_callback_url = local_front_callback_url + '/kakao/login'
 state = getattr(settings, 'STATE')
 
 class Userinfo(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
@@ -43,7 +45,9 @@ class Userinfo(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.Update
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
-    
+    def update(self, request, *args, **kwargs):
+        
+        return super().update(request, *args, **kwargs)
     def get_object(self):
         # 현재 로그인된 사용자를 반환
         return self.request.user
