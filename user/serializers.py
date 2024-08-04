@@ -82,7 +82,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             'user',
             'created_at',
             'like_count',
-            'like'
+            'like',
+            'is_like'
         ]
 # class CourseDiarySerializer(serializers.ModelSerializer):
 #     diary = serializers.SerializerMethodField()
