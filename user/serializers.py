@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from .models import Course, Diary
 from django.conf import settings
 import requests
+from accounts.serializers import UserInfoSerializer
 
 # from .views import search_place_by_id
 def search_place_by_id(place_id):
@@ -14,6 +15,7 @@ def search_place_by_id(place_id):
 
 class CourseSerializer(serializers.ModelSerializer):
     serializers.PrimaryKeyRelatedField(read_only=True)
+    user = UserInfoSerializer(read_only=True)
     class Meta:
         model = Course
         fields = '__all__'
@@ -28,6 +30,7 @@ class CourseSerializer(serializers.ModelSerializer):
 class CourseDetailSerializer(serializers.ModelSerializer):
     serializers.PrimaryKeyRelatedField(read_only=True)
     placelist = serializers.SerializerMethodField(read_only=True)
+    user = UserInfoSerializer(read_only=True)
 
     def get_placelist(self, instance):
         place_id_list = instance.placelist

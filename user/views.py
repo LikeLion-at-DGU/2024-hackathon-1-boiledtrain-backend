@@ -15,6 +15,8 @@ from .models import Course, Diary
 from .serializers import CourseSerializer, DiarySerializer, CourseDetailSerializer
 
 from django.shortcuts import get_object_or_404
+
+from accounts.serializers import UserInfoSerializer
 # 거리 계산에 필요한 라이브러리
 from math import radians, sin, cos, sqrt, atan2
 class CourseViewSet(viewsets.ModelViewSet):
