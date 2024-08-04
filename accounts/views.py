@@ -257,7 +257,7 @@ def front_kakao_callback(request):
         # 기존에 kakao로 가입된 유저
         data = {'access_token': access_token, 'code': code}
         accept = requests.post(
-            f"{BASE_URL}accounts/kakao/login/finish/", data=data)
+            f"{BASE_URL}accounts/front_kakao/login/finish/", data=data)
         accept_status = accept.status_code
 
         print("try 에서 출력한 status 값 : " , accept_status)
@@ -281,7 +281,7 @@ def front_kakao_callback(request):
         data = {'access_token': access_token, 'code': code}
 
         accept = requests.post(
-            f"{BASE_URL}accounts/kakao/login/finish/", data=data)
+            f"{BASE_URL}accounts/front_kakao/login/finish/", data=data)
         accept_status = accept.status_code
         print("except 에서 출력한 status 값 : " , accept_status)
         if accept_status != 200:
