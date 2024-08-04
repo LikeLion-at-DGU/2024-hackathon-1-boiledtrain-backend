@@ -55,19 +55,19 @@ class CourseViewSet(viewsets.ModelViewSet):
     @action(methods=['GET'], detail=False, url_path="like_order")
     def like_order(self, request):
         course = self.get_queryset().order_by('-like_count')
-        courses = CourseSerializer(course, many=True)
+        courses = CourseSerializer(course, many=True, context={'request': request})
         return Response(courses.data)
     
     @action(methods=['GET'], detail=False, url_path="created_order")
     def created_order(self, request):
         course = self.get_queryset().order_by('created_at')
-        courses = CourseSerializer(course, many=True)
+        courses = CourseSerializer(course, many=True, context={'request': request})
         return Response(courses.data)
     
     @action(methods=['GET'], detail=False, url_path="zzim_course")
     def zzim_course(self, request):
         course = self.request.user.likes.all()
-        courses = CourseSerializer(course, many=True)
+        courses = CourseSerializer(course, many=True, context={'request': request})
         return Response(courses.data)
     
     @action(methods=['GET'], detail=True, url_path="likes")
@@ -81,7 +81,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             post.like.add(request.user)
             post.like_count += 1
             post.save()
-        course_serializer = CourseSerializer(post)
+        course_serializer = CourseSerializer(post, context={'request': request})
         return Response(course_serializer.data)
 
 class SubwayCourseViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
