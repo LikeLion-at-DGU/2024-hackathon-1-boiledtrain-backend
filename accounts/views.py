@@ -1,4 +1,4 @@
-import json, requests
+import json, requests, os
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.response import Response
@@ -43,6 +43,7 @@ class Userinfo(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.Update
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    
     def get_object(self):
         # 현재 로그인된 사용자를 반환
         return self.request.user
