@@ -16,6 +16,15 @@ def search_place_by_id(place_id):
 class CourseSerializer(serializers.ModelSerializer):
     serializers.PrimaryKeyRelatedField(read_only=True)
     user = UserInfoSerializer(read_only=True)
+    is_like = serializers.SerializerMethodField(read_only=True)
+
+    def get_is_like(self, instance):
+        request = self.context.get('request', None)
+        if request is not None and request.user in instance.like.all():
+            return True
+        else:
+            return False
+            
     class Meta:
         model = Course
         fields = '__all__'
@@ -24,14 +33,24 @@ class CourseSerializer(serializers.ModelSerializer):
             'user',
             'created_at',
             'like_count',
-            'like'
+            'like',
+            'is_like'
         ]
+        
 
 class CourseDetailSerializer(serializers.ModelSerializer):
     serializers.PrimaryKeyRelatedField(read_only=True)
     placelist = serializers.SerializerMethodField(read_only=True)
     user = UserInfoSerializer(read_only=True)
+    is_like = serializers.SerializerMethodField(read_only=True)
 
+    def get_is_like(self, instance):
+        request = self.context.get('request', None)
+        if request.user in instance.like.all():
+            return True
+        else:
+            return False
+        
     def get_placelist(self, instance):
         place_id_list = instance.placelist
         placelist = []
@@ -63,7 +82,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             'user',
             'created_at',
             'like_count',
-            'like'
+            'like',
+            'is_like'
         ]
 # class CourseDiarySerializer(serializers.ModelSerializer):
 #     diary = serializers.SerializerMethodField()

@@ -16,7 +16,7 @@ from .serializers import CourseSerializer, DiarySerializer, CourseDetailSerializ
 
 from django.shortcuts import get_object_or_404
 
-from accounts.serializers import UserInfoSerializer
+
 # 거리 계산에 필요한 라이브러리
 from math import radians, sin, cos, sqrt, atan2
 class CourseViewSet(viewsets.ModelViewSet):
@@ -55,19 +55,19 @@ class CourseViewSet(viewsets.ModelViewSet):
     @action(methods=['GET'], detail=False, url_path="like_order")
     def like_order(self, request):
         course = self.get_queryset().order_by('-like_count')
-        courses = CourseSerializer(course, many=True)
+        courses = CourseSerializer(course, many=True, context={'request': request})
         return Response(courses.data)
     
     @action(methods=['GET'], detail=False, url_path="created_order")
     def created_order(self, request):
         course = self.get_queryset().order_by('created_at')
-        courses = CourseSerializer(course, many=True)
+        courses = CourseSerializer(course, many=True, context={'request': request})
         return Response(courses.data)
     
     @action(methods=['GET'], detail=False, url_path="zzim_course")
     def zzim_course(self, request):
         course = self.request.user.likes.all()
-        courses = CourseSerializer(course, many=True)
+        courses = CourseSerializer(course, many=True, context={'request': request})
         return Response(courses.data)
     
     @action(methods=['GET'], detail=True, url_path="likes")
@@ -81,7 +81,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             post.like.add(request.user)
             post.like_count += 1
             post.save()
-        course_serializer = CourseSerializer(post)
+        course_serializer = CourseSerializer(post, context={'request': request})
         return Response(course_serializer.data)
 
 class SubwayCourseViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
@@ -100,11 +100,12 @@ class MyCourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     def get_serializer_class(self):
        return CourseSerializer
     
+    def get_permissions(self):
+        return [IsCourseOwnerOrReadOnly()]
+    
     def get_queryset(self):
         return Course.objects.filter(user=self.request.user)
 
-    def get_permissions(self):
-        return [IsCourseOwnerOrReadOnly()]
     
     
 #다이어리 디테일, 여기서 수정,삭제
