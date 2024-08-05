@@ -46,13 +46,13 @@
 
 - <strong>목적 여행</strong>: 박물관 및 전시회, 카페, 맛집, 서점 등 특정 목적 선택 후, 선택한 목적 인근에 있는 지하철 역 및 목적과 관련된 장소, 추천 장소 제공
   
-### 📍 코스 기능
+### 📍 코스
 
 - <strong>나만의 코스 만들기</strong>: 랜덤 여행, 목적 여행에서 추천받은 장소들을 나만의 여행 코스로 저장. 또는, 코스 만들기에서 지하철역과 장소들을 조합하여 나만의 코스 제작
   
 - <strong>인기 코스 구경 및 좋아요</strong>: 다른 사용자들의 코스를 인기순/최신순으로 구경. 원하는 지하철역 검색 후 관심있는 코스에 좋아요 눌러 나의 좋아요 코스에 저장
 
-### 📓 다이어리 기능
+### 📓 다이어리
 - <strong>여행 다이어리 작성</strong>: 나만의 여행 코스에 저장한 코스별로 다이어리를 작성하여 여행의 추억을 기록
 
 ## 🚀 커밋 규칙 (Commit Convention)
@@ -95,6 +95,9 @@
 ### 협업 툴
 ![Discord](https://img.shields.io/badge/Discord-5865F2?style=flat-square&logo=discord&logoColor=ffffff)
 ![Notion](https://img.shields.io/badge/Notion-000000?style=flat-square&logo=notion&logoColor=ffffff)
+![Figma](https://img.shields.io/badge/Figma-F24E1E?style=flat-square&logo=Figma&logoColor=white)
+![Github](https://img.shields.io/badge/Github-181717?style=flat-square&logo=Github&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=Git&logoColor=white)
 
 
 ### 개발 도구
