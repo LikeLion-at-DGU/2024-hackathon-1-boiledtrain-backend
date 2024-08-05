@@ -57,6 +57,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         for p in place_id_list:
             place = search_place_by_id(p)
             result = {
+                "id": p,
                 "name" : place['result']['name']
             }
             if 'formatted_address' in place['result']:
