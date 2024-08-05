@@ -37,7 +37,7 @@
 
 ## <img width="5%" src="https://github.com/user-attachments/assets/fcf59ee3-f8b1-4d4f-adc6-9b07977db11f"> 서비스 타겟
 
-- 지하철을 자주 이용하는 수도권 거주자들로, 일상 속에서 새로운 경험을 찾고자 하는 현대인들
+- 지하철을 자주 이용하는 수도권 거주자들, 일상 속에서 새로운 경험을 찾고자 하는 현대인들
 
 ## <img width="5%" src="https://github.com/user-attachments/assets/fcf59ee3-f8b1-4d4f-adc6-9b07977db11f"> 메인 기능
 
@@ -77,10 +77,10 @@
 ## 🛠️ 사용 언어, 개발환경, 개발 툴
 
 
-### 백엔드
+### Backend
 <img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=Python&logoColor=white"/> <img src="https://img.shields.io/badge/django-092E20?style=flat-square&logo=django&logoColor=white"/> <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=Postman&logoColor=white"/> <img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=SQLite&logoColor=white"/>
 
-### 프론트엔드
+### Frontend
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=ffffff)
 ![HTML5](https://img.shields.io/badge/-HTML5-E34F26?style=flat-square&logo=html5&logoColor=ffffff)
 ![CSS3](https://img.shields.io/badge/-CSS3-1572B6?style=flat-square&logo=css3)
