@@ -28,7 +28,8 @@ class CourseViewSet(viewsets.ModelViewSet):
             return CourseSerializer
        
     def get_queryset(self):
-        return Course.objects.all()
+        return Course.objects.all().order_by('-created_at')
+
     
     def get_permissions(self):
         return [IsPossibleGetCourseOrReadOnly()]
@@ -60,7 +61,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     
     @action(methods=['GET'], detail=False, url_path="created_order")
     def created_order(self, request):
-        course = self.get_queryset().order_by('created_at')
+        course = self.get_queryset().order_by('-created_at')
         courses = CourseSerializer(course, many=True, context={'request': request})
         return Response(courses.data)
     
@@ -104,7 +105,7 @@ class MyCourseViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         return [IsCourseOwnerOrReadOnly()]
     
     def get_queryset(self):
-        return Course.objects.filter(user=self.request.user)
+        return Course.objects.filter(user=self.request.user).order_by('-created_at')
 
     
     
