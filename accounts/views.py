@@ -67,7 +67,7 @@ def kakao_login(request):
     rest_api_key = getattr(settings, 'KAKAO_REST_API_KEY')
     
     return redirect(
-        f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={client_callback_url}&response_type=code"
+        f"https://kauth.kakao.com/oauth/authorize?client_id={rest_api_key}&redirect_uri={client_callback_url}&response_type=code&prompt=login"
     )
 
 
