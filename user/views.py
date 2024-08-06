@@ -67,7 +67,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     
     @action(methods=['GET'], detail=False, url_path="zzim_course")
     def zzim_course(self, request):
-        course = self.request.user.likes.all()
+        course = self.request.user.likes.all().order_by('-like_count')
         courses = CourseSerializer(course, many=True, context={'request': request})
         return Response(courses.data)
     
